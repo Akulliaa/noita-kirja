@@ -6,6 +6,8 @@
   import { auth } from '../lib/auth.svelte';
   import { t, i18n, type Key } from '../lib/i18n.svelte';
   import { CELL } from '../lib/fog';
+  import { positions, startPositions, ageSeconds } from '../lib/positions.svelte';
+  startPositions();
 
   startFog(); books.start();
 
@@ -35,6 +37,7 @@
 <div class="row head">
   <h1>🧙 {t('nav.players')}</h1>
   <span class="spacer"></span>
+  <a class="btn" href="#/tracker">🎮 {t('nav.tracker')}</a>
   <a class="btn" href="#/map">🌍 {t('map.global')}</a>
 </div>
 
@@ -46,6 +49,11 @@
         <div>
           <h3>{p.username}</h3>
           <span class="badge {p.role}">{t(`role.${p.role}` as Key)}</span>
+          {#if positions.now && ageSeconds(p.id) !== null}
+            {@const a = ageSeconds(p.id)!}
+            {#if a < 120}<span class="badge live">🟢 {t('trk.inGame')}</span>
+            {:else}<span class="muted small"> · {t('trk.seen', { date: fmt(positions.items[p.id].updated_at) })}</span>{/if}
+          {/if}
         </div>
         <span class="spacer"></span>
         {#if p.id === auth.profile?.id}
@@ -87,5 +95,6 @@
   .bar { height: 8px; border-radius: 99px; background: rgba(0, 0, 0, 0.35); overflow: hidden; }
   .bar div { height: 100%; background: var(--c); border-radius: 99px; transition: width 0.4s; }
   .small { font-size: 0.85rem; }
+  .badge.live { color: #9fd27a; margin-left: 0.3rem; }
   .mapbtn { justify-content: center; }
 </style>

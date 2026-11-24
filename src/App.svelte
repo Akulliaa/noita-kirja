@@ -17,6 +17,7 @@
   import Search from './pages/Search.svelte';
   import MapPage from './pages/Map.svelte';
   import Players from './pages/Players.svelte';
+  import Tracker from './pages/Tracker.svelte';
 
   const page = $derived(route.parts[0] ?? '');
 
@@ -54,6 +55,8 @@
       {#key route.query.get('player') ?? ''}<MapPage />{/key}
     {:else if page === 'players'}
       <Players />
+    {:else if page === 'tracker'}
+      <Tracker />
     {:else}
       <Home />
     {/if}

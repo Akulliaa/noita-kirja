@@ -24,6 +24,7 @@
     { path: 'rosetta', key: 'nav.rosetta', icon: '🔣' },
     { path: 'map', key: 'nav.map', icon: '🗺️' },
     { path: 'players', key: 'nav.players', icon: '🧙' },
+    { path: 'tracker', key: 'nav.tracker', icon: '🎮' },
     { path: 'admin', key: 'nav.admin', icon: '🔑', admin: true },
   ];
   const current = $derived(route.parts[0] ?? '');

@@ -10,8 +10,10 @@
   import { route, go } from '../lib/router.svelte';
   import { t, type Key } from '../lib/i18n.svelte';
   import type { Pin } from '../lib/types';
+  import { positions, startPositions, isLive } from '../lib/positions.svelte';
 
-  startFog(); pins.start(); books.start(); notes.start();
+  startFog(); pins.start(); books.start(); notes.start(); startPositions();
+  let follow = $state(false);
 
   let canvas: HTMLCanvasElement;
   let engine: MapEngine | null = null;
@@ -161,7 +163,22 @@
     if (showPins) for (const p of pins.state.items) list.push({ id: p.id, x: p.x, y: p.y, icon: p.icon, title: p.title, kind: 'pin' });
     if (showBooks) for (const b of books.state.items)
       if (b.loc_x !== null && b.loc_y !== null) list.push({ id: b.id, x: b.loc_x, y: b.loc_y, icon: '📖', title: b.title, kind: 'book' });
+    // live players (in the shown set, signal < 2 min)
+    positions.now;
+    for (const pid of visible) {
+      const pos = positions.items[pid];
+      if (!pos || !isLive(pid)) continue;
+      const pr = people.get(pid);
+      list.push({ id: `player:${pid}`, x: pos.x, y: pos.y, icon: '', title: pr?.username ?? '?', kind: 'player', color: pr?.color });
+    }
     if (engine) { engine.markers = list; engine.draw(); }
+  });
+
+  // Follow my live position
+  $effect(() => {
+    const me = auth.profile?.id;
+    const pos = me ? positions.items[me] : undefined;
+    if (follow && pos && engine) engine.centerOn(pos.x, pos.y, Math.max(engine.scale, 0.5));
   });
 
   $effect(() => { if (engine) { engine.tool = tool; engine.brushPx = brushPx; engine.draw(); } });
@@ -199,6 +216,7 @@
           <label class="check">
             <input type="checkbox" checked={!hidden[p.id]} onchange={() => (hidden[p.id] = !hidden[p.id])} />
             <span class="swatch" style:background={p.color}></span>{p.username}
+            {#if isLive(p.id)}<span class="livedot" title={t('trk.live')}></span>{/if}
             {#if p.role === 'reader'}<span class="muted small">({t('role.reader')})</span>{/if}
           </label>
         {/each}
@@ -209,6 +227,9 @@
     <div class="block">
       <label class="check"><input type="checkbox" bind:checked={showPins} /> 📍 {t('map.pins')} ({pins.state.items.length})</label>
       <label class="check"><input type="checkbox" bind:checked={showBooks} /> 📖 {t('nav.library')}</label>
+      {#if auth.profile && positions.items[auth.profile.id]}
+        <label class="check"><input type="checkbox" bind:checked={follow} /> 🎯 {t('map.follow')}</label>
+      {/if}
     </div>
 
     <div class="block">
@@ -328,6 +349,7 @@
   .check input { width: auto; }
   .check.sub { margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-dim); }
   .swatch { width: 0.9rem; height: 0.9rem; border-radius: 3px; border: 1px solid rgba(255, 255, 255, 0.4); }
+  .livedot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #7fd35a; box-shadow: 0 0 6px #7fd35a; }
   .tools { display: flex; flex-wrap: wrap; gap: 0.3rem; }
   .tools button { padding: 0.35rem 0.55rem; font-size: 1.05rem; }
   .on { border-color: var(--gold-bright) !important; background: rgba(212, 175, 85, 0.3) !important; }

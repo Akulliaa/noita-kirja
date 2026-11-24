@@ -193,7 +193,7 @@ export class MapEngine {
     if (this.brushing()) { this.on.brushEnd?.(); return; }
     if (start && !start.moved) {
       const m = this.hitMarker(p);
-      if (m && this.tool === 'pan') this.on.marker?.(m, p);
+      if (m && m.kind !== 'player' && this.tool === 'pan') this.on.marker?.(m, p);
       else { const w = this.toWorld(p.x, p.y); this.on.click?.(w.x, w.y); }
     }
   };

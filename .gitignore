@@ -25,3 +25,8 @@ Thumbs.db
 # Screenshots dropped in the project root
 /*.png
 /*.jpg
+
+# Tracker mod: personal files never go to git
+mod/**/config.lua
+mod/**/out*.json
+mod/**/last_response.txt

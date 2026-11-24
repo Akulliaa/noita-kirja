@@ -1,0 +1,6 @@
+<Mod
+  name="Noita Kirja Tracker"
+  description="Sends your position to your group's Noita Kirja map so explored areas are revealed automatically. Changes nothing in the game."
+  request_no_api_restrictions="1"
+>
+</Mod>
