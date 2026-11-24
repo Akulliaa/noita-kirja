@@ -36,6 +36,7 @@ Run each file of `supabase/migrations/` **in order** in Supabase → SQL Editor:
 | `005_quiet_translations.sql` | adding translations doesn't count as an edit |
 | `006_rune_locations.sql` | map position of runic texts (Rosetta Stone tab) |
 | `007_quiet_tracking.sql` | lighter tracking: only writes map/position when something changed (lets the mod send every second) |
+| `008_user_prefs.sql` | private per-account preferences (players hidden on the global map, map layers) |
 
 Also: Authentication → Sign In / Providers → Email → turn **Confirm email** off.
 The first account created becomes admin.

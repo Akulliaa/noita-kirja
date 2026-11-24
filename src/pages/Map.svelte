@@ -16,9 +16,9 @@
   import { lt } from '../lib/loc';
   import { addTranslations } from '../lib/translate';
   import { i18n } from '../lib/i18n.svelte';
+  import { prefs, loadPrefs, setMapPrefs } from '../lib/prefs.svelte';
 
   startFog(); pins.start(); books.start(); notes.start(); glyphs.start(); startPositions();
-  let showRunes = $state(true);
   let placeRuneId = $state<string | null>(null);
   let follow = $state(false);
 
@@ -29,13 +29,21 @@
   const singleId = $derived(route.query.get('player'));
   const single = $derived(singleId ? people.get(singleId) ?? null : null);
   const members = $derived(people.state.items.filter((p) => p.role !== 'pending'));
-  let includeReaders = $state(false);
-  let hidden = $state<Record<string, boolean>>({});
-  let showPins = $state(true);
-  let showBooks = $state(true);
+  // Saved in the user's account (see prefs.svelte.ts), so they survive a reload.
+  $effect(() => { if (auth.profile?.id) loadPrefs(); });
+  const includeReaders = $derived(prefs.value.map.includeReaders);
+  const hiddenSet = $derived(new Set(prefs.value.map.hidden));
+  const showPins = $derived(prefs.value.map.showPins);
+  const showBooks = $derived(prefs.value.map.showBooks);
+  const showRunes = $derived(prefs.value.map.showRunes);
+  function togglePlayer(id: string) {
+    const h = new Set(prefs.value.map.hidden);
+    if (h.has(id)) h.delete(id); else h.add(id);
+    setMapPrefs({ hidden: [...h] });
+  }
 
   const globalPlayers = $derived(members.filter((p) => p.role === 'admin' || includeReaders));
-  const visible = $derived(singleId ? [singleId] : globalPlayers.filter((p) => !hidden[p.id]).map((p) => p.id));
+  const visible = $derived(singleId ? [singleId] : globalPlayers.filter((p) => !hiddenSet.has(p.id)).map((p) => p.id));
 
   // ---------------- Tools ----------------
   let tool = $state<Tool>('pan');
@@ -237,20 +245,20 @@
       <div class="block players">
         {#each globalPlayers as p (p.id)}
           <label class="check">
-            <input type="checkbox" checked={!hidden[p.id]} onchange={() => (hidden[p.id] = !hidden[p.id])} />
+            <input type="checkbox" checked={!hiddenSet.has(p.id)} onchange={() => togglePlayer(p.id)} />
             <span class="swatch" style:background={p.color}></span>{p.username}
             {#if isLive(p.id)}<span class="livedot" title={t('trk.live')}></span>{/if}
             {#if p.role === 'reader'}<span class="muted small">({t('role.reader')})</span>{/if}
           </label>
         {/each}
-        <label class="check sub"><input type="checkbox" bind:checked={includeReaders} /> {t('map.includeReaders')}</label>
+        <label class="check sub"><input type="checkbox" checked={includeReaders} onchange={(e) => setMapPrefs({ includeReaders: e.currentTarget.checked })} /> {t('map.includeReaders')}</label>
       </div>
     {/if}
 
     <div class="block">
-      <label class="check"><input type="checkbox" bind:checked={showPins} /> 📍 {t('map.pins')} ({pins.state.items.length})</label>
-      <label class="check"><input type="checkbox" bind:checked={showBooks} /> 📖 {t('nav.library')}</label>
-      <label class="check"><input type="checkbox" bind:checked={showRunes} /> 🔣 {t('map.runes')}</label>
+      <label class="check"><input type="checkbox" checked={showPins} onchange={(e) => setMapPrefs({ showPins: e.currentTarget.checked })} /> 📍 {t('map.pins')} ({pins.state.items.length})</label>
+      <label class="check"><input type="checkbox" checked={showBooks} onchange={(e) => setMapPrefs({ showBooks: e.currentTarget.checked })} /> 📖 {t('nav.library')}</label>
+      <label class="check"><input type="checkbox" checked={showRunes} onchange={(e) => setMapPrefs({ showRunes: e.currentTarget.checked })} /> 🔣 {t('map.runes')}</label>
       {#if auth.profile && positions.items[auth.profile.id]}
         <label class="check"><input type="checkbox" bind:checked={follow} /> 🎯 {t('map.follow')}</label>
       {/if}
