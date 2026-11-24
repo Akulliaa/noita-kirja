@@ -6,6 +6,7 @@
   import { t, i18n } from '../../lib/i18n.svelte';
   import { excerpt } from '../../lib/markdown';
   import MapLink from '../../components/MapLink.svelte';
+  import { lt } from '../../lib/loc';
 
   let search = $state('');
   let tag = $state('');
@@ -17,7 +18,7 @@
     return books.state.items.filter((b) =>
       (!tag || b.tags.includes(tag)) &&
       (located === 'all' || (located === 'yes') === (b.loc_x !== null)) &&
-      (!q || [b.title, b.content, b.loc_label ?? '', b.tags.join(' ')].join(' ').toLowerCase().includes(q)));
+      (!q || [b.title, b.content, b.loc_label ?? '', b.title_tr ?? '', b.content_tr ?? '', b.loc_label_tr ?? '', b.tags.join(' ')].join(' ').toLowerCase().includes(q)));
   });
   const fmt = (s: string) => new Date(s).toLocaleDateString(i18n.lang === 'fr' ? 'fr-FR' : 'en-GB');
 </script>
@@ -53,10 +54,10 @@
       <div class="book" onclick={() => go(`/library/${b.id}`)}>
         <div class="spine"></div>
         <div class="body">
-          <h3>{b.title}</h3>
-          <p class="ex">{excerpt(b.content, 150) || '…'}</p>
+          <h3>{lt(b, 'title')}</h3>
+          <p class="ex">{excerpt(lt(b, 'content'), 150) || '…'}</p>
           <div class="row foot">
-            <MapLink x={b.loc_x} y={b.loc_y} label={b.loc_label} book={b.id} />
+            <MapLink x={b.loc_x} y={b.loc_y} label={lt(b, 'loc_label')} book={b.id} />
             {#each b.tags as tg}<span class="tag">#{tg}</span>{/each}
           </div>
           <p class="who">{t('lib.foundBy', { name: personName(b.found_by) })} · {fmt(b.created_at)}</p>

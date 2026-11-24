@@ -5,6 +5,7 @@
   import { t, i18n, type Key } from '../lib/i18n.svelte';
   import { personName } from '../lib/live.svelte';
   import { KIND_ICON } from '../lib/noteMeta';
+  import { lt } from '../lib/loc';
   import type { NoteKind } from '../lib/types';
   const fmt = (s: string) => new Date(s).toLocaleString(i18n.lang === 'fr' ? 'fr-FR' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' });
 
@@ -39,12 +40,12 @@
     [e, m, n, b, g, p].forEach((v, i) => (stats[i].n = v));
 
     const [rn, rb] = await Promise.all([
-      supabase.from('notes').select('id,title,kind,updated_by,updated_at').order('updated_at', { ascending: false }).limit(6),
-      supabase.from('books').select('id,title,created_by,updated_at').order('updated_at', { ascending: false }).limit(6),
+      supabase.from('notes').select('id,title,title_tr,lang,kind,updated_by,updated_at').order('updated_at', { ascending: false }).limit(6),
+      supabase.from('books').select('id,title,title_tr,lang,created_by,updated_at').order('updated_at', { ascending: false }).limit(6),
     ]);
     recent = [
-      ...(rn.data ?? []).map((x: any) => ({ href: `#/notes/${x.id}`, icon: KIND_ICON[x.kind as NoteKind], title: x.title, who: x.updated_by, at: x.updated_at })),
-      ...(rb.data ?? []).map((x: any) => ({ href: `#/library/${x.id}`, icon: '📚', title: x.title, who: x.created_by, at: x.updated_at })),
+      ...(rn.data ?? []).map((x: any) => ({ href: `#/notes/${x.id}`, icon: KIND_ICON[x.kind as NoteKind], title: lt(x, 'title'), who: x.updated_by, at: x.updated_at })),
+      ...(rb.data ?? []).map((x: any) => ({ href: `#/library/${x.id}`, icon: '📚', title: lt(x, 'title'), who: x.created_by, at: x.updated_at })),
     ].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 8);
     if (isAdmin()) pending = await count('profiles', (q) => q.eq('role', 'pending'));
   });
@@ -73,7 +74,7 @@
 
 {#if recent.length}
   <section class="card recent">
-    <h2>🕓 {t('home.recent')}</h2>
+    <div class="row"><h2>🕓 {t('home.recent')}</h2><span class="spacer"></span><a href="#/activity">{t('act.seeAll')} →</a></div>
     <ul>
       {#each recent as r (r.href)}
         <li><a href={r.href}>{r.icon} {r.title}</a><span class="muted"> — {personName(r.who)} · {fmt(r.at)}</span></li>

@@ -11,6 +11,9 @@
   import { t, type Key } from '../lib/i18n.svelte';
   import type { Pin } from '../lib/types';
   import { positions, startPositions, isLive } from '../lib/positions.svelte';
+  import { lt } from '../lib/loc';
+  import { addTranslations } from '../lib/translate';
+  import { i18n } from '../lib/i18n.svelte';
 
   startFog(); pins.start(); books.start(); notes.start(); startPositions();
   let follow = $state(false);
@@ -100,9 +103,10 @@
   async function savePin(e: SubmitEvent) {
     e.preventDefault();
     if (!newPin || !pinTitle.trim()) return;
-    const { error } = await supabase.from('pins').insert({
-      x: Math.round(newPin.x), y: Math.round(newPin.y), title: pinTitle.trim(), icon: pinIcon, note_id: pinNote,
-    });
+    const row = await addTranslations({
+      x: Math.round(newPin.x), y: Math.round(newPin.y), title: pinTitle.trim(), icon: pinIcon, note_id: pinNote, lang: i18n.lang,
+    } as Record<string, any>, ['title'], i18n.lang);
+    const { error } = await supabase.from('pins').insert(row);
     if (error) return flash('❌ ' + error.message);
     await pins.reload();
     newPin = null;
@@ -160,9 +164,9 @@
   // Markers
   $effect(() => {
     const list: Marker[] = [];
-    if (showPins) for (const p of pins.state.items) list.push({ id: p.id, x: p.x, y: p.y, icon: p.icon, title: p.title, kind: 'pin' });
+    if (showPins) for (const p of pins.state.items) list.push({ id: p.id, x: p.x, y: p.y, icon: p.icon, title: lt(p, 'title'), kind: 'pin' });
     if (showBooks) for (const b of books.state.items)
-      if (b.loc_x !== null && b.loc_y !== null) list.push({ id: b.id, x: b.loc_x, y: b.loc_y, icon: '📖', title: b.title, kind: 'book' });
+      if (b.loc_x !== null && b.loc_y !== null) list.push({ id: b.id, x: b.loc_x, y: b.loc_y, icon: '📖', title: lt(b, 'title'), kind: 'book' });
     // live players (in the shown set, signal < 2 min)
     positions.now;
     for (const pid of visible) {
@@ -264,8 +268,8 @@
         <label for="pb">📖 {t('map.placeBook')}</label>
         <select id="pb" value={placeBookId ?? ''} onchange={(e) => { placeBookId = (e.target as HTMLSelectElement).value || null; tool = placeBookId ? 'place' : 'pan'; }}>
           <option value="">—</option>
-          {#if placingBook && placingBook.loc_x !== null}<option value={placingBook.id}>{placingBook.title} ({t('map.move')})</option>{/if}
-          {#each unplacedBooks as b (b.id)}<option value={b.id}>{b.title}</option>{/each}
+          {#if placingBook && placingBook.loc_x !== null}<option value={placingBook.id}>{lt(placingBook, 'title')} ({t('map.move')})</option>{/if}
+          {#each unplacedBooks as b (b.id)}<option value={b.id}>{lt(b, 'title')}</option>{/each}
         </select>
       {/if}
     </div>
@@ -278,7 +282,7 @@
   </aside>
 
   {#if tool === 'place' && placingBook}
-    <div class="banner">📖 {t('map.clickToPlace', { title: placingBook.title })}
+    <div class="banner">📖 {t('map.clickToPlace', { title: lt(placingBook, 'title') })}
       <button class="small ghost" onclick={() => { tool = 'pan'; placeBookId = null; }}>✕</button>
     </div>
   {/if}
@@ -297,7 +301,7 @@
         {@const pin = pinOf(popup.m.id)}
         <strong>{popup.m.icon} {popup.m.title}</strong>
         <div class="row">
-          {#if pin?.note_id}<a class="btn small" href={`#/notes/${pin.note_id}`}>📜 {notes.get(pin.note_id)?.title ?? t('nav.notes')}</a>{/if}
+          {#if pin?.note_id}<a class="btn small" href={`#/notes/${pin.note_id}`}>📜 {lt(notes.get(pin.note_id), 'title') || t('nav.notes')}</a>{/if}
           {#if isAdmin()}<button class="small danger" onclick={() => deletePin(popup!.m.id)}>🗑</button>{/if}
         </div>
       {/if}
@@ -319,7 +323,7 @@
         <label for="pn">{t('map.linkNote')}</label>
         <select id="pn" bind:value={pinNote}>
           <option value={null}>—</option>
-          {#each notes.state.items as n (n.id)}<option value={n.id}>{n.title}</option>{/each}
+          {#each notes.state.items as n (n.id)}<option value={n.id}>{lt(n, 'title')}</option>{/each}
         </select>
         <div class="row actions">
           <button class="primary" type="submit" disabled={!pinTitle.trim()}>💾 {t('common.save')}</button>

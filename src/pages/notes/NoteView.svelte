@@ -9,6 +9,9 @@
   import type { NoteVersion } from '../../lib/types';
   import Markdown from '../../components/Markdown.svelte';
   import StatusBadge from '../../components/StatusBadge.svelte';
+  import { lt, untranslated } from '../../lib/loc';
+  import { i18n as I } from '../../lib/i18n.svelte';
+  let showOriginal = $state(false);
 
   let { id }: { id: string } = $props();
   const note = $derived(notes.get(id));
@@ -54,7 +57,7 @@
     <header>
       <div class="row">
         <span class="kind">{KIND_ICON[note.kind]}</span>
-        <h1>{note.title}</h1>
+        <h1>{showOriginal ? note.title : lt(note, 'title')}</h1>
       </div>
       <div class="row meta">
         <span class="badge kindb">{t(`kind.${note.kind}` as Key)}</span>
@@ -100,7 +103,13 @@
     {/if}
 
     <div class="divider"></div>
-    {#if note.body.trim()}<Markdown source={note.body} />{:else}<p class="muted">{t('md.empty')}</p>{/if}
+    {#if note.lang !== I.lang}
+      <p class="muted small trline">
+        {#if untranslated(note, 'body') || untranslated(note, 'title')}⏳ {t('tr.pending')}{:else}🌐 {t('tr.auto', { lang: note.lang.toUpperCase() })}{/if}
+        <button class="ghost small" onclick={() => (showOriginal = !showOriginal)}>{showOriginal ? t('tr.showTranslation') : t('tr.showOriginal')}</button>
+      </p>
+    {/if}
+    {#if note.body.trim()}<Markdown source={showOriginal ? note.body : lt(note, 'body')} />{:else}<p class="muted">{t('md.empty')}</p>{/if}
   </article>
 {/if}
 
@@ -118,5 +127,6 @@
   .history ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; }
   .history li { display: flex; gap: 0.5rem; align-items: center; }
   .history li.sel button.ghost { color: var(--gold-bright); }
+  .trline { margin: 0 0 0.6rem; }
   .old { margin-top: 0.8rem; padding: 0.8rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px; opacity: 0.9; }
 </style>

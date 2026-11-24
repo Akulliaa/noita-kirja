@@ -18,6 +18,7 @@
   import MapPage from './pages/Map.svelte';
   import Players from './pages/Players.svelte';
   import Tracker from './pages/Tracker.svelte';
+  import Activity from './pages/Activity.svelte';
 
   const page = $derived(route.parts[0] ?? '');
 
@@ -57,6 +58,8 @@
       <Players />
     {:else if page === 'tracker'}
       <Tracker />
+    {:else if page === 'activity'}
+      <Activity />
     {:else}
       <Home />
     {/if}

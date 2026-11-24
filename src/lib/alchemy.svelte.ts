@@ -1,6 +1,9 @@
 // Shared, live-synced alchemy data (elements + mixtures) for every page.
 import { supabase } from './supabase';
 import type { Element, Mixture } from './types';
+import { lt } from './loc';
+import { i18n } from './i18n.svelte';
+import { addTranslations } from './translate';
 
 export const alchemy = $state<{ loaded: boolean; elements: Element[]; mixtures: Mixture[]; error: string }>({
   loaded: false,
@@ -66,23 +69,37 @@ export function startAlchemy() {
 // ---- Helpers --------------------------------------------------------------
 export const norm = (s: string) => s.trim().toLowerCase();
 
+/** Element name in the reader's language. */
+export const elName = (e: Element) => lt(e, 'name');
+
 export function elementName(id: string | null): string {
   if (!id) return '?';
-  return alchemy.elements.find((e) => e.id === id)?.name ?? '?';
+  const e = alchemy.elements.find((x) => x.id === id);
+  return e ? elName(e) : '?';
 }
 
-export const byName = (a: { name: string }, b: { name: string }) =>
-  a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+export const byName = (a: Element, b: Element) =>
+  elName(a).localeCompare(elName(b), undefined, { sensitivity: 'base' });
+
+/** Does this element match a search (original or translated name)? */
+export const elMatches = (e: Element, q: string) =>
+  !q || norm(e.name).includes(q) || norm(e.name_tr ?? '').includes(q);
+
+/** Create an element with its translated name. */
+export async function createElement(name: string): Promise<Element> {
+  const row = await addTranslations({ name: name.trim(), lang: i18n.lang }, ['name'], i18n.lang);
+  const { data, error } = await supabase.from('elements').insert(row).select().single();
+  if (error) throw error;
+  upsert(alchemy.elements, data as Element);
+  return data as Element;
+}
 
 export const ingredientsKey = (ids: string[]) => [...ids].sort().join(',');
 
 /** Find an element by name, or create it (admin only). */
 export async function ensureElement(name: string): Promise<string> {
   const n = name.trim();
-  const found = alchemy.elements.find((e) => norm(e.name) === norm(n));
+  const found = alchemy.elements.find((e) => norm(e.name) === norm(n) || norm(e.name_tr ?? '') === norm(n));
   if (found) return found.id;
-  const { data, error } = await supabase.from('elements').insert({ name: n }).select().single();
-  if (error) throw error;
-  upsert(alchemy.elements, data as Element);
-  return (data as Element).id;
+  return (await createElement(n)).id;
 }

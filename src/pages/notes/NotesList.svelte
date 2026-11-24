@@ -4,6 +4,7 @@
   import { isAdmin } from '../../lib/auth.svelte';
   import { t, i18n, type Key } from '../../lib/i18n.svelte';
   import { excerpt } from '../../lib/markdown';
+  import { lt } from '../../lib/loc';
   import { KINDS, KIND_ICON, STATUSES } from '../../lib/noteMeta';
   import type { NoteKind, NoteStatus } from '../../lib/types';
   import StatusBadge from '../../components/StatusBadge.svelte';
@@ -20,7 +21,7 @@
       (kind === 'all' || n.kind === kind) &&
       (status === 'all' || n.status === status) &&
       (!tag || n.tags.includes(tag)) &&
-      (!q || (n.title + ' ' + n.body + ' ' + n.tags.join(' ')).toLowerCase().includes(q)));
+      (!q || [n.title, n.body, n.title_tr ?? '', n.body_tr ?? '', n.tags.join(' ')].join(' ').toLowerCase().includes(q)));
   });
   const count = (k: NoteKind | 'all') => notes.state.items.filter((n) => k === 'all' || n.kind === k).length;
   const fmt = (s: string) => new Date(s).toLocaleDateString(i18n.lang === 'fr' ? 'fr-FR' : 'en-GB');
@@ -62,9 +63,9 @@
       <a class="card note" href={`#/notes/${n.id}`}>
         <div class="row top">
           <span class="kind" title={t(`kind.${n.kind}` as Key)}>{KIND_ICON[n.kind]}</span>
-          <h3>{n.title}</h3>
+          <h3>{lt(n, 'title')}</h3>
         </div>
-        <p class="ex muted">{excerpt(n.body) || '…'}</p>
+        <p class="ex muted">{excerpt(lt(n, 'body')) || '…'}</p>
         <div class="row foot">
           <StatusBadge status={n.status} />
           {#each n.tags as tg}<span class="tag">#{tg}</span>{/each}

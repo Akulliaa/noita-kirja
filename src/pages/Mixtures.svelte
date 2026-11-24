@@ -1,6 +1,8 @@
 <script lang="ts">
   import { supabase } from '../lib/supabase';
-  import { alchemy, elementName, ensureElement, ingredientsKey, norm, byName } from '../lib/alchemy.svelte';
+  import { alchemy, elementName, elName, ensureElement, ingredientsKey, norm, byName } from '../lib/alchemy.svelte';
+  import { addTranslations } from '../lib/translate';
+  import { lt } from '../lib/loc';
   import { isAdmin } from '../lib/auth.svelte';
   import { t, i18n } from '../lib/i18n.svelte';
   import type { Mixture } from '../lib/types';
@@ -54,7 +56,11 @@
       const ids = [...new Set(await Promise.all(ingredients.map((p) => p.id ?? ensureElement(p.name))))];
       if (ids.length < 2) throw new Error(t('alc.err.twoIngredients'));
       const resultId = noReaction ? null : result!.id ?? (await ensureElement(result!.name));
-      const row = { ingredients: ids, result_id: resultId, no_reaction: noReaction, note: note.trim() || null };
+      const before = editingId ? alchemy.mixtures.find((m) => m.id === editingId) ?? null : null;
+      const lang = before?.lang ?? i18n.lang;
+      const row = await addTranslations(
+        { ingredients: ids, result_id: resultId, no_reaction: noReaction, note: note.trim() || null, lang } as Record<string, any>,
+        ['note'], lang, before);
 
       const existing = alchemy.mixtures.find((m) => ingredientsKey(m.ingredients) === ingredientsKey(ids));
       let targetId = editingId;
@@ -99,7 +105,7 @@
       if (outcome === 'reaction' && m.no_reaction) return false;
       if (outcome === 'none' && !m.no_reaction) return false;
       if (q) {
-        const hay = [...m.ingredients.map(elementName), m.no_reaction ? '' : elementName(m.result_id), m.note ?? '']
+        const hay = [...m.ingredients.map(elementName), m.no_reaction ? '' : elementName(m.result_id), m.note ?? '', m.note_tr ?? '']
           .join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
@@ -182,16 +188,16 @@
     <p class="muted">{t('alc.untestedHint')}</p>
     <select bind:value={pairBase}>
       <option value={null}>—</option>
-      {#each [...alchemy.elements].sort(byName) as e (e.id)}<option value={e.id}>{e.name}</option>{/each}
+      {#each [...alchemy.elements].sort(byName) as e (e.id)}<option value={e.id}>{elName(e)}</option>{/each}
     </select>
     {#if pairBase}
       <p class="muted small">{t('alc.untestedCount', { n: untested.length })}</p>
       <div class="chips scroll">
         {#each untested as e (e.id)}
           {#if isAdmin()}
-            <button class="chip clickable" onclick={() => prefill([pairBase!, e.id])}>{e.name}</button>
+            <button class="chip clickable" onclick={() => prefill([pairBase!, e.id])}>{elName(e)}</button>
           {:else}
-            <span class="chip">{e.name}</span>
+            <span class="chip">{elName(e)}</span>
           {/if}
         {/each}
       </div>
@@ -240,7 +246,7 @@
         <li>
           <div class="main">
             <MixtureFormula mix={m} />
-            {#if m.note}<p class="note">{m.note}</p>{/if}
+            {#if m.note}<p class="note">{lt(m, 'note')}</p>{/if}
           </div>
           <span class="date muted">{fmt(m.created_at)}</span>
           {#if isAdmin()}

@@ -8,6 +8,8 @@
   import type { Note, NoteKind, NoteStatus } from '../../lib/types';
   import MarkdownEditor from '../../components/MarkdownEditor.svelte';
   import TagInput from '../../components/TagInput.svelte';
+  import TranslationBox from '../../components/TranslationBox.svelte';
+  import { addTranslations } from '../../lib/translate';
 
   let { id = null }: { id?: string | null } = $props();
 
@@ -18,6 +20,9 @@
   let tags = $state<string[]>([...(existing?.tags ?? [])]);
   let body = $state(existing?.body ?? '');
   let saving = $state(false);
+  const lang = untrack(() => existing?.lang ?? i18n.lang);
+  let tr = $state<Record<string, string>>(untrack(() => ({ title: existing?.title_tr ?? '', body: existing?.body_tr ?? '' })));
+  let manual = $state<string[]>([]);
   let err = $state('');
 
   const initial = untrack(() => JSON.stringify({ title, kind, status, tags, body }));
@@ -35,7 +40,9 @@
     err = '';
     if (!title.trim()) return (err = t('notes.err.title'));
     saving = true;
-    const row = { title: title.trim(), kind, status, tags, body, lang: i18n.lang };
+    const row: Record<string, any> = { title: title.trim(), kind, status, tags, body, lang };
+    for (const f of manual) row[`${f}_tr`] = tr[f]?.trim() || null;
+    await addTranslations(row, ['title', 'body'], lang, existing ?? null, manual);
     const res = id
       ? await supabase.from('notes').update(row).eq('id', id).select().single()
       : await supabase.from('notes').insert(row).select().single();
@@ -87,9 +94,12 @@
   <label for="body">{t('notes.body')}</label>
   <MarkdownEditor id="body" bind:value={body} folder="notes" rows={18} />
 
+  <TranslationBox {lang} values={{ title, body }} bind:tr bind:manual
+    fields={[{ key: 'title', label: t('notes.title') }, { key: 'body', label: t('notes.body'), multiline: true }]} />
+
   {#if err}<p class="error">{err}</p>{/if}
   <div class="row actions">
-    <button class="primary" type="submit" disabled={saving}>💾 {t('common.save')}</button>
+    <button class="primary" type="submit" disabled={saving}>{saving ? '⏳' : '💾'} {saving ? t('tr.saving') : t('common.save')}</button>
     <button type="button" class="ghost" onclick={cancel}>{t('common.cancel')}</button>
     <span class="muted small">Ctrl+S</span>
   </div>

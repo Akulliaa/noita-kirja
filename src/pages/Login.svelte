@@ -77,7 +77,7 @@
   .tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 2px solid var(--parchment-3); }
   .tabs button {
     background: none; border: none; border-radius: 0; color: var(--ink-soft);
-    font-family: var(--font-title); padding: 0.6rem; border-bottom: 3px solid transparent; margin-bottom: -2px;
+    font-family: var(--font-title); font-size: 0.95rem; padding: 0.6rem 0.3rem; border-bottom: 3px solid transparent; margin-bottom: -2px;
   }
   .tabs button.active { color: var(--ink); border-bottom-color: var(--gold-dim); }
   input { background: #f6ecd2; color: var(--ink); border-color: var(--parchment-3); }

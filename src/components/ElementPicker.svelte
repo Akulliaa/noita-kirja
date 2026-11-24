@@ -1,7 +1,7 @@
 <script lang="ts">
   // Search-as-you-type element chooser. Enter picks the first match
   // (or the typed text when allowCreate is on).
-  import { alchemy, norm, byName } from '../lib/alchemy.svelte';
+  import { alchemy, norm, byName, elName, elMatches } from '../lib/alchemy.svelte';
   import { t } from '../lib/i18n.svelte';
 
   let {
@@ -26,15 +26,15 @@
     const n = norm(q);
     const ex = new Set(exclude);
     return alchemy.elements
-      .filter((e) => !ex.has(e.id) && (!n || norm(e.name).includes(n)))
+      .filter((e) => !ex.has(e.id) && elMatches(e, n))
       .sort((a, b) => {
         // names starting with the query first
-        const sa = norm(a.name).startsWith(n) ? 0 : 1, sb = norm(b.name).startsWith(n) ? 0 : 1;
+        const sa = norm(elName(a)).startsWith(n) ? 0 : 1, sb = norm(elName(b)).startsWith(n) ? 0 : 1;
         return sa - sb || byName(a, b);
       })
       .slice(0, 12);
   });
-  const exact = $derived(alchemy.elements.some((e) => norm(e.name) === norm(q)));
+  const exact = $derived(alchemy.elements.some((e) => norm(e.name) === norm(q) || norm(e.name_tr ?? '') === norm(q)));
   const showCreate = $derived(allowCreate && q.trim() !== '' && !exact);
 
   function choose(pick: { id: string | null; name: string }) {
@@ -50,7 +50,7 @@
     else if (e.key === 'Escape') { open = false; }
     else if (e.key === 'Enter') {
       e.preventDefault();
-      if (active < matches.length && matches[active]) choose({ id: matches[active].id, name: matches[active].name });
+      if (active < matches.length && matches[active]) choose({ id: matches[active].id, name: elName(matches[active]) });
       else if (showCreate) choose({ id: null, name: q.trim() });
     }
   }
@@ -71,8 +71,8 @@
     <ul class="menu">
       {#each matches as m, i (m.id)}
         <li>
-          <button type="button" class:active={i === active} onmousedown={() => choose({ id: m.id, name: m.name })}>
-            {m.name}
+          <button type="button" class:active={i === active} onmousedown={() => choose({ id: m.id, name: elName(m) })}>
+            {elName(m)}
           </button>
         </li>
       {/each}

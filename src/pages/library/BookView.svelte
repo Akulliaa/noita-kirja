@@ -7,6 +7,9 @@
   import { t, i18n } from '../../lib/i18n.svelte';
   import Markdown from '../../components/Markdown.svelte';
   import MapLink from '../../components/MapLink.svelte';
+  import { lt, untranslated } from '../../lib/loc';
+  let showOriginal = $state(false);
+  const f = (field: string) => (book ? (showOriginal ? (book as any)[field] ?? '' : lt(book, field)) : '');
 
   let { id }: { id: string } = $props();
   const book = $derived(books.get(id));
@@ -28,9 +31,9 @@
   <div class="card muted">{t('notes.notFound')}</div>
 {:else}
   <article class="parchment page">
-    <h1>{book.title}</h1>
+    <h1>{f('title')}</h1>
     <div class="row meta">
-      <MapLink x={book.loc_x} y={book.loc_y} label={book.loc_label} book={book.id} />
+      <MapLink x={book.loc_x} y={book.loc_y} label={f('loc_label')} book={book.id} />
       {#each book.tags as tg}<span class="tag">#{tg}</span>{/each}
       <span class="spacer"></span>
       <span class="who">{t('lib.foundBy', { name: personName(book.found_by) })} · {fmt(book.created_at)}</span>
@@ -43,7 +46,13 @@
     {/if}
     <div class="sep"></div>
     <div class="text">
-      {#if book.content.trim()}<Markdown source={book.content} />{:else}<p>{t('md.empty')}</p>{/if}
+      {#if book.lang !== i18n.lang}
+        <p class="trline">
+          {#if untranslated(book, 'content')}⏳ {t('tr.pending')}{:else}🌐 {t('tr.auto', { lang: book.lang.toUpperCase() })}{/if}
+          <button class="small" onclick={() => (showOriginal = !showOriginal)}>{showOriginal ? t('tr.showTranslation') : t('tr.showOriginal')}</button>
+        </p>
+      {/if}
+      {#if book.content.trim()}<Markdown source={f('content')} />{:else}<p>{t('md.empty')}</p>{/if}
     </div>
   </article>
 {/if}
@@ -57,6 +66,7 @@
   .who { font-size: 0.85rem; color: var(--ink-soft); }
   .actions { margin-top: 0.6rem; }
   .small { font-size: 0.85rem; }
+  .trline { font-size: 0.85rem; color: var(--ink-soft); }
   .sep { height: 2px; margin: 1.2rem 0; background: linear-gradient(90deg, transparent, var(--parchment-3), transparent); }
   .text { font-size: 1.08rem; }
   .text :global(.md) { color: var(--ink); }

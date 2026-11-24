@@ -9,6 +9,8 @@
   import type { Book } from '../../lib/types';
   import MarkdownEditor from '../../components/MarkdownEditor.svelte';
   import TagInput from '../../components/TagInput.svelte';
+  import TranslationBox from '../../components/TranslationBox.svelte';
+  import { addTranslations } from '../../lib/translate';
 
   let { id = null }: { id?: string | null } = $props();
   const existing = untrack(() => (id ? books.get(id) : undefined));
@@ -21,6 +23,9 @@
   let tags = $state<string[]>([...(existing?.tags ?? [])]);
   let foundBy = $state<string | null>(existing?.found_by ?? auth.profile?.id ?? null);
   let saving = $state(false);
+  const lang = untrack(() => existing?.lang ?? i18n.lang);
+  let tr = $state<Record<string, string>>(untrack(() => ({ title: existing?.title_tr ?? '', content: existing?.content_tr ?? '', loc_label: existing?.loc_label_tr ?? '' })));
+  let manual = $state<string[]>([]);
   let err = $state('');
 
   const allTags = $derived([...new Set(books.state.items.flatMap((b) => b.tags))].sort());
@@ -34,11 +39,13 @@
     if (hasX !== hasY) return (err = t('lib.err.coords'));
     saving = true;
     const row = {
-      title: title.trim(), content, tags, found_by: foundBy, lang: i18n.lang,
+      title: title.trim(), content, tags, found_by: foundBy, lang,
       loc_label: locLabel.trim() || null,
       loc_x: hasX ? Number(locX) : null,
       loc_y: hasY ? Number(locY) : null,
     };
+    for (const f of manual) (row as Record<string, any>)[`${f}_tr`] = tr[f]?.trim() || null;
+    await addTranslations(row as Record<string, any>, ['title', 'content', 'loc_label'], lang, existing ?? null, manual);
     const res = id
       ? await supabase.from('books').update(row).eq('id', id).select().single()
       : await supabase.from('books').insert(row).select().single();
@@ -95,9 +102,12 @@
   <label for="content">{t('lib.content')}</label>
   <MarkdownEditor id="content" bind:value={content} folder="books" rows={16} placeholder={t('lib.contentPlaceholder')} />
 
+  <TranslationBox {lang} values={{ title, content, loc_label: locLabel }} bind:tr bind:manual
+    fields={[{ key: 'title', label: t('lib.bookTitle') }, { key: 'loc_label', label: t('lib.locLabel') }, { key: 'content', label: t('lib.content'), multiline: true }]} />
+
   {#if err}<p class="error">{err}</p>{/if}
   <div class="row actions">
-    <button class="primary" type="submit" disabled={saving}>💾 {t('common.save')}</button>
+    <button class="primary" type="submit" disabled={saving}>{saving ? '⏳' : '💾'} {saving ? t('tr.saving') : t('common.save')}</button>
     <button type="button" class="ghost" onclick={() => go(id ? `/library/${id}` : '/library')}>{t('common.cancel')}</button>
   </div>
 </form>

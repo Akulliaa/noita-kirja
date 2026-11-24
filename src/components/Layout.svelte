@@ -17,6 +17,7 @@
 
   const links: { path: string; key: Key; icon: string; admin?: boolean }[] = [
     { path: '', key: 'nav.home', icon: '🏠' },
+    { path: 'activity', key: 'nav.activity', icon: '📰' },
     { path: 'elements', key: 'nav.elements', icon: '💧' },
     { path: 'mixtures', key: 'nav.mixtures', icon: '⚗️' },
     { path: 'notes', key: 'nav.notes', icon: '📜' },

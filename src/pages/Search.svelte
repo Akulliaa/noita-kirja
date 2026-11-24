@@ -6,6 +6,7 @@
   import { excerpt } from '../lib/markdown';
   import { KIND_ICON } from '../lib/noteMeta';
   import MixtureFormula from '../components/MixtureFormula.svelte';
+  import { lt } from '../lib/loc';
 
   notes.start(); books.start(); glyphs.start();
 
@@ -17,10 +18,10 @@
 
   const res = $derived(needle.length < 2 ? null : {
     elements: alchemy.elements.filter((e) => has(e.name, e.name_tr)),
-    mixtures: alchemy.mixtures.filter((m) => has(...m.ingredients.map(elementName), m.no_reaction ? '' : elementName(m.result_id), m.note)),
-    notes: notes.state.items.filter((n) => has(n.title, n.body, n.tags.join(' '))),
-    books: books.state.items.filter((b) => has(b.title, b.content, b.loc_label, b.tags.join(' '))),
-    glyphs: glyphs.state.items.filter((g) => has(g.meaning, g.symbol, g.notes)),
+    mixtures: alchemy.mixtures.filter((m) => has(...m.ingredients.map(elementName), m.no_reaction ? '' : elementName(m.result_id), m.note, m.note_tr)),
+    notes: notes.state.items.filter((n) => has(n.title, n.body, n.title_tr, n.body_tr, n.tags.join(' '))),
+    books: books.state.items.filter((b) => has(b.title, b.content, b.loc_label, b.title_tr, b.content_tr, b.loc_label_tr, b.tags.join(' '))),
+    glyphs: glyphs.state.items.filter((g) => has(g.meaning, g.symbol, g.notes, g.meaning_tr, g.notes_tr)),
   });
   const total = $derived(res ? Object.values(res).reduce((n, l) => n + l.length, 0) : 0);
 
@@ -41,27 +42,27 @@
 
   {#if res.elements.length}
     <section class="card"><h2>💧 {t('nav.elements')}</h2>
-      <div class="row">{#each res.elements as e (e.id)}<a class="chip" href={`#/elements/${e.id}`}>{e.name}</a>{/each}</div>
+      <div class="row">{#each res.elements as e (e.id)}<a class="chip" href={`#/elements/${e.id}`}>{lt(e, 'name')}</a>{/each}</div>
     </section>
   {/if}
   {#if res.mixtures.length}
     <section class="card"><h2>⚗️ {t('nav.mixtures')}</h2>
-      <ul>{#each res.mixtures.slice(0, 50) as m (m.id)}<li><MixtureFormula mix={m} />{#if m.note}<span class="muted"> — {m.note}</span>{/if}</li>{/each}</ul>
+      <ul>{#each res.mixtures.slice(0, 50) as m (m.id)}<li><MixtureFormula mix={m} />{#if m.note}<span class="muted"> — {lt(m, 'note')}</span>{/if}</li>{/each}</ul>
     </section>
   {/if}
   {#if res.notes.length}
     <section class="card"><h2>📜 {t('nav.notes')}</h2>
-      <ul>{#each res.notes as n (n.id)}<li><a href={`#/notes/${n.id}`}>{KIND_ICON[n.kind]} <strong>{n.title}</strong></a><p class="muted snip">{snippet(n.body)}</p></li>{/each}</ul>
+      <ul>{#each res.notes as n (n.id)}<li><a href={`#/notes/${n.id}`}>{KIND_ICON[n.kind]} <strong>{lt(n, 'title')}</strong></a><p class="muted snip">{snippet(lt(n, 'body'))}</p></li>{/each}</ul>
     </section>
   {/if}
   {#if res.books.length}
     <section class="card"><h2>📚 {t('nav.library')}</h2>
-      <ul>{#each res.books as b (b.id)}<li><a href={`#/library/${b.id}`}><strong>{b.title}</strong></a><p class="muted snip">{snippet(b.content)}</p></li>{/each}</ul>
+      <ul>{#each res.books as b (b.id)}<li><a href={`#/library/${b.id}`}><strong>{lt(b, 'title')}</strong></a><p class="muted snip">{snippet(lt(b, 'content'))}</p></li>{/each}</ul>
     </section>
   {/if}
   {#if res.glyphs.length}
     <section class="card"><h2>🔣 {t('nav.rosetta')}</h2>
-      <div class="row">{#each res.glyphs as g (g.id)}<a class="chip" href="#/rosetta">{g.symbol ?? '🖼'} = {g.meaning || '?'}</a>{/each}</div>
+      <div class="row">{#each res.glyphs as g (g.id)}<a class="chip" href="#/rosetta">{g.symbol ?? '🖼'} = {lt(g, 'meaning') || '?'}</a>{/each}</div>
     </section>
   {/if}
 {:else}

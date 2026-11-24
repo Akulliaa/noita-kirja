@@ -18,6 +18,9 @@
   Fallback 1: Chrome/Edge page reads the mod's position file. Fallback 2: sync after game from the save folder (to verify).
 - **Languages**: FR/EN UI toggle. User content translated once at save time (free online service, Chrome built-in translator when available), both versions stored, admin can correct.
 
+## Status
+All phases 1–7 delivered (2026-11-24). Migrations 001–005 to run in order.
+
 ## Phases
 1. Base: Vite + TypeScript app, GitHub Pages deploy, Supabase schema/RLS, username login, approval, import of **element names only** (mixtures, quests, map start fresh — user's choice).
 2. Alchemy: elements (+ merge duplicates), mixtures with 2+ ingredients, table with filters.

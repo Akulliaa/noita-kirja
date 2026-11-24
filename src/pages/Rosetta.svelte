@@ -7,6 +7,8 @@
   import type { Confidence, Glyph } from '../lib/types';
   import StorageImage from '../components/StorageImage.svelte';
   import Markdown from '../components/Markdown.svelte';
+  import { lt } from '../lib/loc';
+  import { addTranslations, otherLang } from '../lib/translate';
 
   glyphs.start();
 
@@ -25,7 +27,7 @@
     const q = search.trim().toLowerCase();
     return sorted.filter((g) =>
       (conf === 'all' || g.confidence === conf) &&
-      (!q || [g.meaning, g.symbol ?? '', g.notes].join(' ').toLowerCase().includes(q)));
+      (!q || [g.meaning, g.meaning_tr ?? '', g.symbol ?? '', g.notes, g.notes_tr ?? ''].join(' ').toLowerCase().includes(q)));
   });
   const selected = $derived(selectedId ? glyphs.get(selectedId) ?? null : null);
   const stats = $derived(Object.fromEntries(CONF.map((c) => [c, glyphs.state.items.filter((g) => g.confidence === c).length])));
@@ -36,6 +38,8 @@
   let fMeaning = $state('');
   let fConf = $state<Confidence>('guess');
   let fNotes = $state('');
+  let fMeaningTr = $state('');
+  let initialMeaningTr = '';
   let editing = $state(false);
   let busy = $state(false);
   let err = $state('');
@@ -45,6 +49,7 @@
   function openNew() {
     selectedId = null; creating = true; editing = true;
     fImage = null; fSymbol = ''; fMeaning = ''; fConf = 'guess'; fNotes = ''; err = ''; uploadedNow = [];
+    fMeaningTr = initialMeaningTr = '';
   }
   function openGlyph(g: Glyph) {
     selectedId = g.id; creating = false; editing = false; err = '';
@@ -52,6 +57,7 @@
   function startEdit(g: Glyph) {
     editing = true;
     fImage = g.image_path; fSymbol = g.symbol ?? ''; fMeaning = g.meaning; fConf = g.confidence; fNotes = g.notes; uploadedNow = [];
+    fMeaningTr = initialMeaningTr = g.meaning_tr ?? '';
   }
   // Images uploaded during an edit that was never saved are removed from storage.
   function discardUploads() {
@@ -83,10 +89,14 @@
     err = '';
     if (!fImage && !fSymbol.trim()) return (err = t('ros.err.needGlyph'));
     busy = true;
-    const row = {
+    const lang = creating ? i18n.lang : selected?.lang ?? i18n.lang;
+    const row: Record<string, any> = {
       image_path: fImage, symbol: fSymbol.trim() || null, meaning: fMeaning.trim(),
-      confidence: fConf, notes: fNotes, lang: i18n.lang,
+      confidence: fConf, notes: fNotes, lang,
     };
+    const manual = fMeaningTr !== initialMeaningTr ? ['meaning'] : [];
+    if (manual.length) row.meaning_tr = fMeaningTr.trim() || null;
+    await addTranslations(row, ['meaning', 'notes'], lang, creating ? null : selected, manual);
     let res;
     if (creating) {
       const max = glyphs.state.items.reduce((m, g) => Math.max(m, g.sort_order), 0);
@@ -170,7 +180,7 @@
               {#if g.image_path}<StorageImage path={g.image_path} pixel alt={g.symbol ?? ''} />
               {:else}<span class="sym">{g.symbol}</span>{/if}
             </span>
-            <span class="meaning" class:unknown={!g.meaning}>{g.meaning || '?'}</span>
+            <span class="meaning" class:unknown={!g.meaning}>{lt(g, 'meaning') || '?'}</span>
           </button>
         {/each}
       </div>
@@ -180,7 +190,7 @@
   {#if selected || creating}
     <aside class="card panel">
       <div class="row">
-        <h2>{creating ? t('ros.new') : editing ? t('ros.edit') : (selected?.meaning || '?')}</h2>
+        <h2>{creating ? t('ros.new') : editing ? t('ros.edit') : (lt(selected, 'meaning') || '?')}</h2>
         <span class="spacer"></span>
         <button class="small" onclick={close} aria-label={t('common.close')}>✕</button>
       </div>
@@ -209,6 +219,11 @@
           <label for="mean">{t('ros.meaning')}</label>
           <input id="mean" bind:value={fMeaning} maxlength="100" placeholder={t('ros.meaningPlaceholder')} />
 
+          {#if !creating && selected}
+            <label for="meantr">{t('ros.meaning')} ({otherLang(selected.lang).toUpperCase()})</label>
+            <input id="meantr" bind:value={fMeaningTr} maxlength="100" placeholder={t('tr.autoPlaceholder')} />
+          {/if}
+
           <label for="conf">{t('ros.confidence')}</label>
           <div class="row confpick" id="conf">
             {#each CONF as c}
@@ -234,7 +249,7 @@
         </div>
         {#if selected.symbol && selected.image_path}<p class="muted">{t('ros.symbol')} : <code>{selected.symbol}</code></p>{/if}
         <p><span class="badge" style:color={CONF_COLOR[selected.confidence]}>{t(`conf.${selected.confidence}` as Key)}</span></p>
-        {#if selected.notes.trim()}<Markdown source={selected.notes} />{/if}
+        {#if selected.notes.trim()}<Markdown source={lt(selected, 'notes')} />{/if}
         {#if isAdmin()}
           <div class="divider"></div>
           <div class="row">

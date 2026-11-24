@@ -1,6 +1,7 @@
 <script lang="ts">
   import { supabase } from '../lib/supabase';
-  import { alchemy, norm, byName } from '../lib/alchemy.svelte';
+  import { alchemy, norm, byName, elName, elMatches, createElement } from '../lib/alchemy.svelte';
+  import { addTranslations, otherLang } from '../lib/translate';
   import { isAdmin } from '../lib/auth.svelte';
   import { route, go } from '../lib/router.svelte';
   import { t } from '../lib/i18n.svelte';
@@ -24,7 +25,7 @@
   });
 
   const list = $derived(
-    alchemy.elements.filter((e) => !search || norm(e.name).includes(norm(search))).sort(byName),
+    alchemy.elements.filter((e) => elMatches(e, norm(search))).sort(byName),
   );
 
   const madeFrom = $derived(selected ? alchemy.mixtures.filter((m) => m.result_id === selected.id && !m.no_reaction) : []);
@@ -37,23 +38,29 @@
     err = '';
     const n = newName.trim();
     if (!n) return;
-    if (alchemy.elements.some((x) => norm(x.name) === norm(n))) return (err = t('el.exists'));
-    const { error } = await supabase.from('elements').insert({ name: n });
-    if (error) err = error.message;
-    else newName = '';
+    if (alchemy.elements.some((x) => norm(x.name) === norm(n) || norm(x.name_tr ?? '') === norm(n))) return (err = t('el.exists'));
+    try { await createElement(n); newName = ''; } catch (e: any) { err = e?.message ?? String(e); }
   }
 
   async function rename(el: Element) {
-    const n = prompt(t('el.renamePrompt'), el.name)?.trim();
+    const n = prompt(t('el.renamePrompt', { lang: el.lang.toUpperCase() }), el.name)?.trim();
     if (!n || n === el.name) return;
     if (alchemy.elements.some((x) => x.id !== el.id && norm(x.name) === norm(n))) return alert(t('el.exists'));
-    const { error } = await supabase.from('elements').update({ name: n }).eq('id', el.id);
+    const row = await addTranslations({ name: n } as Record<string, any>, ['name'], el.lang, el);
+    const { error } = await supabase.from('elements').update(row).eq('id', el.id);
+    if (error) alert(error.message);
+  }
+
+  async function editTranslation(el: Element) {
+    const n = prompt(t('el.trPrompt', { lang: otherLang(el.lang).toUpperCase() }), el.name_tr ?? '');
+    if (n === null) return;
+    const { error } = await supabase.from('elements').update({ name_tr: n.trim() || null }).eq('id', el.id);
     if (error) alert(error.message);
   }
 
   async function remove(el: Element) {
     const n = alchemy.mixtures.filter((m) => m.ingredients.includes(el.id)).length;
-    if (!confirm(t('el.deleteConfirm', { name: el.name, n }))) return;
+    if (!confirm(t('el.deleteConfirm', { name: elName(el), n }))) return;
     const { error } = await supabase.from('elements').delete().eq('id', el.id);
     if (error) alert(error.message);
     else go('/elements');
@@ -63,7 +70,7 @@
   async function merge(el: Element) {
     const target = alchemy.elements.find((x) => x.id === mergeInto);
     if (!target) return;
-    if (!confirm(t('el.mergeConfirm', { from: el.name, into: target.name }))) return;
+    if (!confirm(t('el.mergeConfirm', { from: elName(el), into: elName(target) }))) return;
     const { error } = await supabase.rpc('merge_elements', { p_from: el.id, p_into: target.id });
     if (error) return alert(error.message);
     mergeInto = '';
@@ -90,7 +97,7 @@
     <div class="grid">
       {#each list as e (e.id)}
         <a class="tile" class:active={e.id === selectedId} href={`#/elements/${e.id}`}>
-          <span class="name">{e.name}</span>
+          <span class="name">{elName(e)}</span>
           <span class="meta">
             <span title={t('el.madeFrom')}>⬅ {stats.made.get(e.id) ?? 0}</span>
             <span title={t('el.usedIn')}>➡ {stats.used.get(e.id) ?? 0}</span>
@@ -103,7 +110,10 @@
   {#if selected}
     <aside class="card detail">
       <div class="row">
-        <h2>{selected.name}</h2>
+        <div>
+          <h2>{elName(selected)}</h2>
+          <span class="muted small">{selected.lang.toUpperCase()}: {selected.name} · {otherLang(selected.lang).toUpperCase()}: {selected.name_tr ?? '—'}</span>
+        </div>
         <span class="spacer"></span>
         <a class="btn small" href="#/elements" title={t('common.close')}>✕</a>
       </div>
@@ -129,6 +139,7 @@
         <div class="divider"></div>
         <div class="row">
           <button class="small" onclick={() => rename(selected)}>✏️ {t('el.rename')}</button>
+          <button class="small" onclick={() => editTranslation(selected)}>🌐 {t('el.translation')}</button>
           <button class="small danger" onclick={() => remove(selected)}>🗑 {t('admin.delete')}</button>
         </div>
         <label for="merge">{t('el.mergeLabel')}</label>
@@ -136,7 +147,7 @@
           <select id="merge" class="grow" bind:value={mergeInto}>
             <option value="">—</option>
             {#each alchemy.elements.filter((x) => x.id !== selected.id).sort(byName) as x (x.id)}
-              <option value={x.id}>{x.name}</option>
+              <option value={x.id}>{elName(x)}</option>
             {/each}
           </select>
           <button class="small" disabled={!mergeInto} onclick={() => merge(selected)}>🔗 {t('el.merge')}</button>
