@@ -19,10 +19,12 @@
 - **Languages**: FR/EN UI toggle. User content translated once at save time (free online service, Chrome built-in translator when available), both versions stored, admin can correct.
 
 ## Phases
-1. Base: Vite + TypeScript app, GitHub Pages deploy, Supabase schema/RLS, username login, approval, import of current data.
+1. Base: Vite + TypeScript app, GitHub Pages deploy, Supabase schema/RLS, username login, approval, import of **element names only** (mixtures, quests, map start fresh — user's choice).
 2. Alchemy: elements (+ merge duplicates), mixtures with 2+ ingredients, table with filters.
 3. Notes: quests/theories/misc, tags, status, images (paste/drag, auto-compress), realtime, history, search.
-4. Map: black fog, manual brush, pins ↔ notes, per-player maps, global map with colored outlines.
+   + **Library**: books found (text, screenshot, location label + map coordinates).
+   + **Rosetta Stone**: glyphs of the game alphabet (image or symbol), meaning, confidence, notes.
+4. Map: black fog, manual brush, pins ↔ notes, book pins (clicking a book's location opens the map zoomed on it, `#/map?x=..&y=..`), per-player maps, global map with colored outlines.
 5. Tracking: mod + tracker keys + live dots; fallbacks.
 6. FR/EN UI + auto-translation.
 7. Polish: activity feed, JSON backup export, anti-pause cron, mobile layout.

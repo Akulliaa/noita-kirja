@@ -257,17 +257,90 @@ revoke execute on function public.fog_apply(uuid, jsonb, boolean) from public, a
 grant execute on function public.fog_apply(uuid, jsonb, boolean) to authenticated;
 
 -- ---------------------------------------------------------------------------
+-- Library: books found in the world, with an optional map location.
+-- ---------------------------------------------------------------------------
+create table if not exists public.books (
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null check (length(trim(title)) > 0),
+  title_tr    text,
+  content     text not null default '',  -- markdown, images as ![](kirja:path)
+  content_tr  text,
+  lang        text not null default 'fr' check (lang in ('fr', 'en')),
+  loc_x       double precision,           -- game world coordinates (null = unknown)
+  loc_y       double precision,
+  loc_label   text,                       -- free text, e.g. "behind the waterfall"
+  loc_label_tr text,
+  tags        text[] not null default '{}',
+  found_by    uuid references public.profiles (id) on delete set null default auth.uid(),
+  created_by  uuid references public.profiles (id) on delete set null default auth.uid(),
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  check ((loc_x is null) = (loc_y is null))
+);
+
+-- ---------------------------------------------------------------------------
+-- Rosetta Stone: the glyphs of an unknown alphabet and what we think they mean.
+-- ---------------------------------------------------------------------------
+create table if not exists public.glyphs (
+  id          uuid primary key default gen_random_uuid(),
+  image_path  text,                       -- storage path in the "images" bucket
+  symbol      text,                       -- optional text stand-in for the glyph
+  meaning     text not null default '',   -- current best guess ('' = unknown)
+  meaning_tr  text,
+  notes       text not null default '',
+  notes_tr    text,
+  lang        text not null default 'fr' check (lang in ('fr', 'en')),
+  confidence  text not null default 'guess' check (confidence in ('unknown', 'guess', 'likely', 'sure')),
+  sort_order  int not null default 0,
+  created_by  uuid references public.profiles (id) on delete set null default auth.uid(),
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  check (image_path is not null or symbol is not null)
+);
+
+-- ---------------------------------------------------------------------------
+-- Map pins (generic points of interest, optionally linked to a note).
+-- Books with a location are shown on the map on their own.
+-- ---------------------------------------------------------------------------
+create table if not exists public.pins (
+  id          uuid primary key default gen_random_uuid(),
+  x           double precision not null,
+  y           double precision not null,
+  title       text not null check (length(trim(title)) > 0),
+  title_tr    text,
+  icon        text not null default '📍',
+  lang        text not null default 'fr' check (lang in ('fr', 'en')),
+  note_id     uuid references public.notes (id) on delete set null,
+  created_by  uuid references public.profiles (id) on delete set null default auth.uid(),
+  created_at  timestamptz not null default now()
+);
+
+create or replace function public.touch_updated_at() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  new.updated_at := now();
+  return new;
+end $$;
+
+drop trigger if exists books_touch on public.books;
+create trigger books_touch before update on public.books
+  for each row execute function public.touch_updated_at();
+drop trigger if exists glyphs_touch on public.glyphs;
+create trigger glyphs_touch before update on public.glyphs
+  for each row execute function public.touch_updated_at();
+
+-- ---------------------------------------------------------------------------
 -- RLS for content tables: members read, admins write.
 -- ---------------------------------------------------------------------------
 do $$
 declare t text;
 begin
-  foreach t in array array['elements', 'mixtures', 'notes', 'fog_chunks'] loop
+  foreach t in array array['elements', 'mixtures', 'notes', 'books', 'glyphs', 'pins', 'fog_chunks'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists "%s: members read" on public.%I', t, t);
     execute format('create policy "%s: members read" on public.%I for select to authenticated using (public.is_member())', t, t);
   end loop;
-  foreach t in array array['elements', 'mixtures', 'notes'] loop
+  foreach t in array array['elements', 'mixtures', 'notes', 'books', 'glyphs', 'pins'] loop
     execute format('drop policy if exists "%s: admins write" on public.%I', t, t);
     execute format('create policy "%s: admins write" on public.%I for all to authenticated using (public.is_admin()) with check (public.is_admin())', t, t);
   end loop;
@@ -278,7 +351,8 @@ create policy "fog_chunks: admins delete" on public.fog_chunks
   for delete to authenticated using (public.is_admin());
 
 -- Nothing is readable without being logged in.
-revoke all on public.profiles, public.elements, public.mixtures, public.notes, public.fog_chunks from anon;
+revoke all on public.profiles, public.elements, public.mixtures, public.notes,
+  public.books, public.glyphs, public.pins, public.fog_chunks from anon;
 
 -- ---------------------------------------------------------------------------
 -- Image storage (private bucket)
@@ -310,7 +384,7 @@ create policy "images: admins delete" on storage.objects
 do $$
 declare t text;
 begin
-  foreach t in array array['profiles', 'elements', 'mixtures', 'notes', 'fog_chunks'] loop
+  foreach t in array array['profiles', 'elements', 'mixtures', 'notes', 'books', 'glyphs', 'pins', 'fog_chunks'] loop
     begin
       execute format('alter publication supabase_realtime add table public.%I', t);
     exception when duplicate_object then null;

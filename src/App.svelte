@@ -28,7 +28,7 @@
       <Admin />
     {:else if page === 'elements' || page === 'mixtures'}
       <Soon phase={2} />
-    {:else if page === 'notes'}
+    {:else if page === 'notes' || page === 'library' || page === 'rosetta'}
       <Soon phase={3} />
     {:else if page === 'map' || page === 'players'}
       <Soon phase={4} />

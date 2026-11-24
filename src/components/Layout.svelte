@@ -15,6 +15,8 @@
     { path: 'elements', key: 'nav.elements', icon: '💧' },
     { path: 'mixtures', key: 'nav.mixtures', icon: '⚗️' },
     { path: 'notes', key: 'nav.notes', icon: '📜' },
+    { path: 'library', key: 'nav.library', icon: '📚' },
+    { path: 'rosetta', key: 'nav.rosetta', icon: '🔣' },
     { path: 'map', key: 'nav.map', icon: '🗺️' },
     { path: 'players', key: 'nav.players', icon: '🧙' },
     { path: 'admin', key: 'nav.admin', icon: '🔑', admin: true },

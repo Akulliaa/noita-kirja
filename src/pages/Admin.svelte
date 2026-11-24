@@ -4,7 +4,7 @@
   import { auth, isAdmin } from '../lib/auth.svelte';
   import { t, i18n, type Key } from '../lib/i18n.svelte';
   import type { Profile, Role } from '../lib/types';
-  import { readLegacyFolder, runImport, summarize, type LegacyBundle } from '../lib/legacyImport';
+  import { readLegacyElements, importElements } from '../lib/legacyImport';
 
   let users = $state<Profile[]>([]);
   let msg = $state('');
@@ -49,33 +49,27 @@
     await load();
   }
 
-  // ---- Import ----
-  let bundle = $state<LegacyBundle | null>(null);
+  // ---- Import (elements only) ----
+  let names = $state<string[] | null>(null);
   let pickErr = $state('');
   let importing = $state(false);
-  let logLines = $state<string[]>([]);
-  const summary = $derived(bundle ? summarize(bundle) : null);
+  let result = $state('');
 
   async function pick(e: Event) {
-    pickErr = '';
-    logLines = [];
-    const files = (e.target as HTMLInputElement).files;
-    bundle = files ? await readLegacyFolder(files) : null;
-    if (!bundle) pickErr = t('admin.import.missing');
+    pickErr = result = '';
+    const f = (e.target as HTMLInputElement).files?.[0];
+    names = f ? await readLegacyElements(f) : null;
+    if (!names) pickErr = t('admin.import.missing');
   }
 
   async function doImport() {
-    if (!bundle || !auth.profile) return;
+    if (!names) return;
     importing = true;
-    logLines = [];
     try {
-      await runImport(bundle, auth.profile.id, (m) => {
-        if (m.startsWith('  map ') && logLines.at(-1)?.startsWith('  map ')) logLines[logLines.length - 1] = m;
-        else logLines.push(m);
-      });
-      logLines.push('✅ ' + t('admin.import.done'));
+      const n = await importElements(names);
+      result = '✅ ' + t('admin.import.done', { n });
     } catch (e: any) {
-      logLines.push('❌ ' + t('common.error', { msg: e?.message ?? String(e) }));
+      result = '❌ ' + t('common.error', { msg: e?.message ?? String(e) });
     }
     importing = false;
   }
@@ -140,16 +134,19 @@
     <p class="muted">{t('admin.import.text')}</p>
     <div class="row">
       <label class="btn picker">
-        📁 {t('admin.import.pick')}
-        <input type="file" webkitdirectory multiple onchange={pick} hidden />
+        📄 {t('admin.import.pick')}
+        <input type="file" accept=".json,application/json" onchange={pick} hidden />
       </label>
-      {#if bundle}
+      {#if names}
         <button class="primary" onclick={doImport} disabled={importing}>⬆ {t('admin.import.run')}</button>
       {/if}
     </div>
     {#if pickErr}<p class="error">{pickErr}</p>{/if}
-    {#if summary}<p>{t('admin.import.found', summary)}</p>{/if}
-    {#if logLines.length}<pre class="log">{logLines.join('\n')}</pre>{/if}
+    {#if names}
+      <p>{t('admin.import.found', { n: names.length })}</p>
+      <div class="chips">{#each names as n}<span class="chip">{n}</span>{/each}</div>
+    {/if}
+    {#if result}<p>{result}</p>{/if}
   </section>
 {/if}
 
@@ -159,8 +156,6 @@
   td select { width: auto; min-width: 8rem; }
   tr.pending td { background: rgba(224, 169, 109, 0.08); }
   .picker { margin: 0; cursor: pointer; }
-  .log {
-    background: var(--wood-0); border: 1px solid var(--gold-dim); border-radius: 8px;
-    padding: 0.8rem; max-height: 300px; overflow: auto; font-size: 0.85rem; white-space: pre-wrap;
-  }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 220px; overflow: auto; margin: 0.5rem 0; }
+  .chip { padding: 0.1rem 0.55rem; border-radius: 999px; border: 1px solid var(--gold-dim); font-size: 0.85rem; }
 </style>
