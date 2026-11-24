@@ -8,8 +8,14 @@
   import Home from './pages/Home.svelte';
   import Admin from './pages/Admin.svelte';
   import Soon from './pages/Soon.svelte';
+  import Elements from './pages/Elements.svelte';
+  import Mixtures from './pages/Mixtures.svelte';
+  import { startAlchemy } from './lib/alchemy.svelte';
 
   const page = $derived(route.parts[0] ?? '');
+
+  // Start live alchemy sync once the user is an approved member.
+  $effect(() => { if (auth.profile && isMember()) startAlchemy(); });
 </script>
 
 {#if !auth.ready}
@@ -26,8 +32,10 @@
       <Home />
     {:else if page === 'admin'}
       <Admin />
-    {:else if page === 'elements' || page === 'mixtures'}
-      <Soon phase={2} />
+    {:else if page === 'elements'}
+      <Elements />
+    {:else if page === 'mixtures'}
+      <Mixtures />
     {:else if page === 'notes' || page === 'library' || page === 'rosetta'}
       <Soon phase={3} />
     {:else if page === 'map' || page === 'players'}
