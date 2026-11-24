@@ -2,14 +2,14 @@
 -- Reads where your character is and sends it to your group's Noita Kirja map.
 -- It does not change anything in the game.
 --
--- How: every few seconds the recent positions are written to a small file in this
+-- How: every second (while moving) the recent positions are written to a small file in this
 -- folder and Windows' built-in curl.exe posts it, hidden, without blocking the game.
 
 local DIR = "mods/noita_kirja_tracker/"
 local SAMPLE_FRAMES = 20     -- look at the position 3 times per second
-local SEND_SECONDS = 5       -- send at most every 5 seconds
+local SEND_SECONDS = 1       -- send at most every second while moving
 local HEARTBEAT_SECONDS = 30 -- send the position every 30 s even when standing still
-local ANSWER_TIMEOUT = 40    -- a send without answer after this is considered failed
+local ANSWER_TIMEOUT = 12    -- a send without answer after this is considered failed
 local LOST_AFTER = 90        -- no successful send for this long = "connection lost" message
 local MIN_MOVE = 48          -- world px between two recorded points
 local MAX_POINTS = 300
@@ -131,7 +131,7 @@ local function send(pts)
   fh:close()
   pcall(os.remove, resp)
   local cmd = string.format(
-    'curl.exe -s --retry 1 --retry-delay 2 -m 15 -o "%s" -X POST "%s" -H "apikey: %s" -H "Content-Type: application/json" --data-binary "@%s"',
+    'curl.exe -s -m 8 -o "%s" -X POST "%s" -H "apikey: %s" -H "Content-Type: application/json" --data-binary "@%s"',
     resp, cfg.url, cfg.apikey, file)
   if run_hidden(cmd) then
     slots[slot] = { at = now(), pts = pts }
@@ -243,18 +243,22 @@ function OnWorldPostUpdate()
     local since = t - last_send
     if (#points > 0 and since >= SEND_SECONDS) or since >= HEARTBEAT_SECONDS then
       if #points == 0 then points[1] = { x, y } end
-      local batch = points
-      points = {}
+      -- the server accepts at most 200 points per call: send the oldest 150, keep the rest
+      local batch, rest = {}, {}
+      for i, p in ipairs(points) do
+        if i <= 150 then batch[#batch + 1] = p else rest[#rest + 1] = p end
+      end
+      points = rest
       last_send = t
       if not send(batch) then
         requeue(batch)
-        retry_at = t + 10
+        retry_at = t + 5
       end
     end
   end)
   if not ok then
     -- Never stop for good: note it and try again a bit later.
-    retry_at = now() + 10
+    retry_at = now() + 5
     if not reported.lua then reported.lua = true; say("tracker error (will retry): " .. tostring(err)) end
   end
 end
