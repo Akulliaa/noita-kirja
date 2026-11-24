@@ -1,0 +1,23 @@
+# Private game data — never publish (spoilers + personal progress)
+grimoire_data.json
+grimoire_data.json.tmp
+Melanges/
+*.Zone.Identifier
+*:Zone.Identifier
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node / build
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.vscode/
+.DS_Store
+Thumbs.db
