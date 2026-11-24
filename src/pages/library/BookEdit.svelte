@@ -85,7 +85,11 @@
       <div><label for="lx">X</label><input id="lx" type="number" step="1" bind:value={locX} /></div>
       <div><label for="ly">Y</label><input id="ly" type="number" step="1" bind:value={locY} /></div>
     </div>
-    <p class="muted small">{t('lib.coordsHint')}</p>
+    {#if id}
+      <a class="btn small pickmap" href={`#/map?place=${id}${locX !== null ? `&x=${locX}&y=${locY}` : ''}`}>🗺️ {t('lib.pickOnMap')}</a>
+    {:else}
+      <p class="muted small">{t('lib.pickAfterSave')}</p>
+    {/if}
   </fieldset>
 
   <label for="content">{t('lib.content')}</label>
@@ -105,4 +109,5 @@
   legend { color: var(--gold); font-family: var(--font-title); padding: 0 0.4rem; }
   .small { font-size: 0.85rem; margin: 0.5rem 0 0; }
   .actions { margin-top: 1rem; }
+  .pickmap { margin-top: 0.7rem; }
 </style>

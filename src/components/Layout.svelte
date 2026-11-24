@@ -60,7 +60,7 @@
 
   <button class="burger" onclick={() => (menuOpen = !menuOpen)} aria-label="Menu">☰</button>
 
-  <main>
+  <main class:full={current === 'map'}>
     {@render children()}
   </main>
 </div>
@@ -97,6 +97,7 @@
   .icon { width: 1.4rem; text-align: center; }
   .me { border-top: 1px solid rgba(212, 175, 85, 0.25); padding-top: 0.8rem; display: grid; gap: 0.4rem; }
   main { padding: 2rem clamp(1rem, 3vw, 2.5rem); max-width: 1300px; width: 100%; }
+  main.full { max-width: none; padding: 0; height: 100vh; }
   .burger { display: none; }
 
   @media (max-width: 820px) {
@@ -105,5 +106,6 @@
     aside.open { transform: none; }
     .burger { display: inline-flex; position: fixed; top: 0.7rem; right: 0.7rem; z-index: 30; }
     main { padding-top: 3.5rem; }
+    main.full { padding-top: 0; }
   }
 </style>

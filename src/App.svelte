@@ -7,7 +7,6 @@
   import Layout from './components/Layout.svelte';
   import Home from './pages/Home.svelte';
   import Admin from './pages/Admin.svelte';
-  import Soon from './pages/Soon.svelte';
   import Elements from './pages/Elements.svelte';
   import Mixtures from './pages/Mixtures.svelte';
   import { startAlchemy } from './lib/alchemy.svelte';
@@ -16,6 +15,8 @@
   import Library from './pages/Library.svelte';
   import Rosetta from './pages/Rosetta.svelte';
   import Search from './pages/Search.svelte';
+  import MapPage from './pages/Map.svelte';
+  import Players from './pages/Players.svelte';
 
   const page = $derived(route.parts[0] ?? '');
 
@@ -49,8 +50,10 @@
       <Rosetta />
     {:else if page === 'search'}
       <Search />
-    {:else if page === 'map' || page === 'players'}
-      <Soon phase={4} />
+    {:else if page === 'map'}
+      {#key route.query.get('player') ?? ''}<MapPage />{/key}
+    {:else if page === 'players'}
+      <Players />
     {:else}
       <Home />
     {/if}

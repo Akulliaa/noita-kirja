@@ -98,3 +98,16 @@ export interface Glyph {
   created_at: string;
   updated_at: string;
 }
+
+export interface Pin {
+  id: string;
+  x: number;
+  y: number;
+  title: string;
+  title_tr: string | null;
+  icon: string;
+  lang: Lang;
+  note_id: string | null;
+  created_by: string | null;
+  created_at: string;
+}
