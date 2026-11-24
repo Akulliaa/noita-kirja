@@ -34,6 +34,7 @@ Run each file of `supabase/migrations/` **in order** in Supabase → SQL Editor:
 | `003_note_history.sql` | note version history |
 | `004_tracker.sql` | tracker keys, `track()` endpoint, live positions |
 | `005_quiet_translations.sql` | adding translations doesn't count as an edit |
+| `006_rune_locations.sql` | map position of runic texts (Rosetta Stone tab) |
 
 Also: Authentication → Sign In / Providers → Email → turn **Confirm email** off.
 The first account created becomes admin.
