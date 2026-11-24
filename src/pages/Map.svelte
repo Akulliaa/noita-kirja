@@ -5,7 +5,9 @@
   import { fog, grids, startFog, unionOf, localApply, boundsOf } from '../lib/fogStore.svelte';
   import { applyFog, rasterizeCircle, CELL, type FogGrid } from '../lib/fog';
   import { people } from '../lib/live.svelte';
-  import { pins, books, notes } from '../lib/stores';
+  import { pins, books, notes, glyphs } from '../lib/stores';
+  import { excerpt } from '../lib/markdown';
+  import StorageImage from '../components/StorageImage.svelte';
   import { auth, isAdmin } from '../lib/auth.svelte';
   import { route, go } from '../lib/router.svelte';
   import { t, type Key } from '../lib/i18n.svelte';
@@ -15,7 +17,9 @@
   import { addTranslations } from '../lib/translate';
   import { i18n } from '../lib/i18n.svelte';
 
-  startFog(); pins.start(); books.start(); notes.start(); startPositions();
+  startFog(); pins.start(); books.start(); notes.start(); glyphs.start(); startPositions();
+  let showRunes = $state(true);
+  let placeRuneId = $state<string | null>(null);
   let follow = $state(false);
 
   let canvas: HTMLCanvasElement;
@@ -90,6 +94,13 @@
     popup = null;
     if (tool === 'pin' && isAdmin()) {
       newPin = { x, y }; pinTitle = ''; pinIcon = '📍'; pinNote = null;
+    } else if (tool === 'place' && placeRuneId && isAdmin()) {
+      const { error } = await supabase.from('glyphs').update({ loc_x: Math.round(x), loc_y: Math.round(y) }).eq('id', placeRuneId);
+      if (error) return flash('❌ ' + error.message);
+      await glyphs.reload();
+      if (engine) engine.focus = placeRuneId;
+      flash('🔣 ' + t('map.runePlaced'));
+      tool = 'pan'; placeRuneId = null;
     } else if (tool === 'place' && placeBookId && isAdmin()) {
       const { error } = await supabase.from('books').update({ loc_x: Math.round(x), loc_y: Math.round(y) }).eq('id', placeBookId);
       if (error) return flash('❌ ' + error.message);
@@ -134,10 +145,12 @@
     });
     const qx = Number(route.query.get('x')), qy = Number(route.query.get('y'));
     if (route.query.has('x') && isFinite(qx) && isFinite(qy)) engine.centerOn(qx, qy, 0.8);
-    const focus = route.query.get('book');
+    const focus = route.query.get('book') ?? route.query.get('rune');
     if (focus) { engine.focus = focus; setTimeout(() => { if (engine?.focus === focus) { engine.focus = null; engine.draw(); } }, 8000); }
     const place = route.query.get('place');
     if (place && isAdmin()) { placeBookId = place; tool = 'place'; }
+    const placeR = route.query.get('placeRune');
+    if (placeR && isAdmin()) { placeRuneId = placeR; tool = 'place'; }
     return () => { engine?.destroy(); engine = null; if (urlTimer) clearTimeout(urlTimer); };
   });
 
@@ -165,6 +178,12 @@
   $effect(() => {
     const list: Marker[] = [];
     if (showPins) for (const p of pins.state.items) list.push({ id: p.id, x: p.x, y: p.y, icon: p.icon, title: lt(p, 'title'), kind: 'pin' });
+    if (showRunes) {
+      const stoneId = [...glyphs.state.items].sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at))[0]?.id;
+      for (const g of glyphs.state.items)
+        if (g.id !== stoneId && g.loc_x !== null && g.loc_y !== null)
+          list.push({ id: g.id, x: g.loc_x, y: g.loc_y, icon: '🔣', title: excerpt(lt(g, 'meaning'), 28) || '?', kind: 'rune' });
+    }
     if (showBooks) for (const b of books.state.items)
       if (b.loc_x !== null && b.loc_y !== null) list.push({ id: b.id, x: b.loc_x, y: b.loc_y, icon: '📖', title: lt(b, 'title'), kind: 'book' });
     // live players (in the shown set, signal < 2 min)
@@ -231,6 +250,7 @@
     <div class="block">
       <label class="check"><input type="checkbox" bind:checked={showPins} /> 📍 {t('map.pins')} ({pins.state.items.length})</label>
       <label class="check"><input type="checkbox" bind:checked={showBooks} /> 📖 {t('nav.library')}</label>
+      <label class="check"><input type="checkbox" bind:checked={showRunes} /> 🔣 {t('map.runes')}</label>
       {#if auth.profile && positions.items[auth.profile.id]}
         <label class="check"><input type="checkbox" bind:checked={follow} /> 🎯 {t('map.follow')}</label>
       {/if}
@@ -266,7 +286,7 @@
 
       {#if isAdmin()}
         <label for="pb">📖 {t('map.placeBook')}</label>
-        <select id="pb" value={placeBookId ?? ''} onchange={(e) => { placeBookId = (e.target as HTMLSelectElement).value || null; tool = placeBookId ? 'place' : 'pan'; }}>
+        <select id="pb" value={placeBookId ?? ''} onchange={(e) => { placeBookId = (e.target as HTMLSelectElement).value || null; placeRuneId = null; tool = placeBookId ? 'place' : 'pan'; }}>
           <option value="">—</option>
           {#if placingBook && placingBook.loc_x !== null}<option value={placingBook.id}>{lt(placingBook, 'title')} ({t('map.move')})</option>{/if}
           {#each unplacedBooks as b (b.id)}<option value={b.id}>{lt(b, 'title')}</option>{/each}
@@ -281,6 +301,11 @@
     </div>
   </aside>
 
+  {#if tool === 'place' && placeRuneId}
+    <div class="banner">🔣 {t('map.clickToPlaceRune')}
+      <button class="small ghost" onclick={() => { tool = 'pan'; placeRuneId = null; }}>✕</button>
+    </div>
+  {/if}
   {#if tool === 'place' && placingBook}
     <div class="banner">📖 {t('map.clickToPlace', { title: lt(placingBook, 'title') })}
       <button class="small ghost" onclick={() => { tool = 'pan'; placeBookId = null; }}>✕</button>
@@ -291,11 +316,19 @@
   <!-- ===== Marker popup ===== -->
   {#if popup}
     <div class="popup card" style:left={`${popup.x}px`} style:top={`${popup.y}px`}>
-      {#if popup.m.kind === 'book'}
+      {#if popup.m.kind === 'rune'}
+        {@const g = glyphs.get(popup.m.id)}
+        {#if g?.image_path}<div class="runepic"><StorageImage path={g.image_path} pixel alt="" /></div>{/if}
+        <strong class="runetr">🔣 {excerpt(lt(g, 'meaning'), 140) || '?'}</strong>
+        <div class="row">
+          <a class="btn small" href={`#/rosetta?g=${popup.m.id}`}>{t('map.openRune')}</a>
+          {#if isAdmin()}<button class="small" onclick={() => { placeRuneId = popup!.m.id; placeBookId = null; tool = 'place'; popup = null; }}>↔ {t('map.move')}</button>{/if}
+        </div>
+      {:else if popup.m.kind === 'book'}
         <strong>📖 {popup.m.title}</strong>
         <div class="row">
           <a class="btn small" href={`#/library/${popup.m.id}`}>{t('map.openBook')}</a>
-          {#if isAdmin()}<button class="small" onclick={() => { placeBookId = popup!.m.id; tool = 'place'; popup = null; }}>↔ {t('map.move')}</button>{/if}
+          {#if isAdmin()}<button class="small" onclick={() => { placeBookId = popup!.m.id; placeRuneId = null; tool = 'place'; popup = null; }}>↔ {t('map.move')}</button>{/if}
         </div>
       {:else}
         {@const pin = pinOf(popup.m.id)}
@@ -371,6 +404,9 @@
   .toast { bottom: 1.2rem; }
 
   .popup { position: absolute; transform: translate(-50%, calc(-100% - 30px)); padding: 0.6rem 0.8rem; display: grid; gap: 0.4rem; min-width: 180px; z-index: 5; }
+  .runepic { display: grid; place-items: center; background: #07050b; padding: 0.4rem; }
+  .runepic :global(img) { max-width: 240px; max-height: 120px; image-rendering: pixelated; }
+  .runetr { max-width: 260px; font-weight: 500; }
   .modal-bg { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.5); z-index: 10; }
   .modal { width: min(380px, 92%); }
   .icons { display: flex; flex-wrap: wrap; gap: 0.25rem; }

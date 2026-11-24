@@ -94,6 +94,8 @@ export interface Glyph {
   lang: Lang;
   confidence: Confidence;
   sort_order: number;
+  loc_x: number | null;
+  loc_y: number | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

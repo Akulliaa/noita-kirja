@@ -5,6 +5,7 @@
   import { t, i18n, type Key } from '../lib/i18n.svelte';
   import { lt } from '../lib/loc';
   import { KIND_ICON } from '../lib/noteMeta';
+  import { excerpt } from '../lib/markdown';
 
   notes.start(); books.start(); glyphs.start(); pins.start();
 
@@ -31,7 +32,7 @@
     for (const b of books.state.items)
       out.push({ at: b.created_at, who: b.found_by ?? b.created_by, kind: 'book', icon: '📚', verb: 'act.foundBook', label: lt(b, 'title'), href: `#/library/${b.id}` });
     for (const g of glyphs.state.items)
-      out.push({ at: g.created_at, who: g.created_by, kind: 'glyph', icon: '🔣', verb: 'act.addedGlyph', label: lt(g, 'meaning') || g.symbol || '?', href: '#/rosetta' });
+      out.push({ at: g.created_at, who: g.created_by, kind: 'glyph', icon: '🔣', verb: 'act.addedGlyph', label: excerpt(lt(g, 'meaning'), 60) || g.symbol || '?', href: `#/rosetta?g=${g.id}` });
     for (const p of pins.state.items)
       out.push({ at: p.created_at, who: p.created_by, kind: 'pin', icon: p.icon, verb: 'act.addedPin', label: lt(p, 'title'), href: `#/map?x=${Math.round(p.x)}&y=${Math.round(p.y)}` });
     return out

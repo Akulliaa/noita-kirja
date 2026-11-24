@@ -62,7 +62,7 @@
   {/if}
   {#if res.glyphs.length}
     <section class="card"><h2>🔣 {t('nav.rosetta')}</h2>
-      <div class="row">{#each res.glyphs as g (g.id)}<a class="chip" href="#/rosetta">{g.symbol ?? '🖼'} = {lt(g, 'meaning') || '?'}</a>{/each}</div>
+      <div class="row">{#each res.glyphs as g (g.id)}<a class="chip" href={`#/rosetta?g=${g.id}`}>{g.symbol ?? '🖼'} = {lt(g, 'meaning') || '?'}</a>{/each}</div>
     </section>
   {/if}
 {:else}

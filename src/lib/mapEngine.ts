@@ -40,7 +40,7 @@ export interface Marker {
   x: number; y: number;
   icon: string;
   title: string;
-  kind: 'pin' | 'book' | 'player';
+  kind: 'pin' | 'book' | 'rune' | 'player';
   color?: string;
 }
 export interface Outline { color: string; path: Path2D }

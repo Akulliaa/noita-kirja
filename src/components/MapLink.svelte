@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from '../lib/i18n.svelte';
-  let { x, y, label = '', book = null }: { x: number | null; y: number | null; label?: string | null; book?: string | null } = $props();
-  const href = $derived(`#/map?x=${Math.round(x ?? 0)}&y=${Math.round(y ?? 0)}${book ? `&book=${book}` : ''}`);
+  let { x, y, label = '', book = null, rune = null }: { x: number | null; y: number | null; label?: string | null; book?: string | null; rune?: string | null } = $props();
+  const href = $derived(`#/map?x=${Math.round(x ?? 0)}&y=${Math.round(y ?? 0)}${book ? `&book=${book}` : ''}${rune ? `&rune=${rune}` : ''}`);
 </script>
 
 {#if x !== null && y !== null}
