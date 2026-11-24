@@ -131,13 +131,36 @@ local function check_response()
   end
 end
 
+-- Local player entity. Entangled Worlds marks the OTHER players with "ew_peer".
+local logged_tags = 0
 local function find_player()
   for _, tag in ipairs({ "player_unit", "polymorphed_player" }) do
     local list = EntityGetWithTag(tag) or {}
     for _, e in ipairs(list) do
-      if not EntityHasTag(e, "ew_peer") and not EntityHasTag(e, "ew_client") then return e end
+      if not EntityHasTag(e, "ew_peer") then
+        if logged_tags < 3 then
+          logged_tags = logged_tags + 1
+          pcall(function()
+            local f = io.open(WORK .. "noita_kirja_log.txt", "a")
+            if f then f:write(os.date("%H:%M:%S ") .. "player entity " .. e .. " tags: " .. tostring(EntityGetTags(e)) .. "\n"); f:close() end
+          end)
+        end
+        return e
+      end
     end
   end
+  return nil
+end
+
+-- Where the player is: the character if found, otherwise the camera (= what is on screen).
+local function current_position()
+  local p = find_player()
+  if p then
+    local x, y = EntityGetTransform(p)
+    if x and y then return x, y end
+  end
+  local ok, cx, cy = pcall(GameGetCameraPos)
+  if ok and cx and cy then return cx, cy end
   return nil
 end
 
@@ -156,9 +179,7 @@ function OnWorldPostUpdate()
   if not tried and frame > 60 then start() end -- some multiplayer mods skip OnPlayerSpawned
   if not ready then return end
   check_response()
-  local p = find_player()
-  if not p then return end
-  local x, y = EntityGetTransform(p)
+  local x, y = current_position()
   if not x or not y then return end
 
   if not last_x or (x - last_x) ^ 2 + (y - last_y) ^ 2 >= MIN_MOVE * MIN_MOVE then
