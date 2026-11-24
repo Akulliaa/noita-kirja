@@ -102,6 +102,7 @@
     <li>{t('trk.help2')}</li>
     <li>{t('trk.help3')}</li>
     <li>{t('trk.help4')}</li>
+    <li>{t('trk.help5')}</li>
   </ul>
 </section>
 

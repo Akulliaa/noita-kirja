@@ -17,8 +17,9 @@ return {
 ===================
 1. Put this "noita_kirja_tracker" folder inside Noita's "mods" folder.
 2. In Noita: Mods -> enable "Noita Kirja Tracker" (and unsafe mods).
-3. Start a run: the message "Noita Kirja: tracker active" appears.
-If nothing shows up on the map, open last_response.txt in this folder.
+3. Start a run: "Noita Kirja: tracker active", then "Noita Kirja: connected" appear.
+If nothing shows up on the map, type %TEMP% in the Explorer address bar and
+open noita_kirja_log.txt and noita_kirja_response.txt.
 `;
   return zipSync({
     noita_kirja_tracker: {

@@ -13,7 +13,12 @@ local MIN_MOVE = 48          -- world px between two recorded points
 
 local cfg = nil
 local ready = false
+local tried = false
 local problem = nil
+local WORK = DIR           -- where temp files go (replaced by %TEMP% when available)
+local connected = false
+local reported = false
+local awaiting = false
 local ffi, CreateProcessA, CloseHandle
 
 local points = {}
@@ -21,7 +26,16 @@ local last_x, last_y = nil, nil
 local last_send = -100000
 local toggle = false
 
+local function say(msg)
+  GamePrint("Noita Kirja: " .. msg)
+  pcall(function()
+    local f = io.open(WORK .. "noita_kirja_log.txt", "a")
+    if f then f:write(os.date("%H:%M:%S ") .. msg .. "\n"); f:close() end
+  end)
+end
+
 local function setup()
+  tried = true
   local ok, c = pcall(dofile, DIR .. "config.lua")
   if not ok or type(c) ~= "table" or not c.key or c.key == "" or c.key:find("PASTE") then
     problem = "config.lua missing or without key: download the mod again from the Noita Kirja site."
@@ -38,6 +52,9 @@ local function setup()
     return
   end
   ffi = f
+  -- Absolute temp folder: works whatever folder Noita was started from
+  local okt, tmp = pcall(os.getenv, "TEMP")
+  if okt and tmp and tmp ~= "" then WORK = tmp .. "\\" end
   pcall(ffi.cdef, [[
     typedef struct {
       uint32_t cb; void* lpReserved; void* lpDesktop; void* lpTitle;
@@ -79,15 +96,39 @@ local function send(pts)
   local body = string.format('{"p_key":"%s","p_points":[%s],"p_radius":%d}',
     cfg.key, table.concat(parts, ","), tonumber(cfg.radius) or 200)
   toggle = not toggle
-  local file = DIR .. (toggle and "out1.json" or "out2.json")
+  local file = WORK .. (toggle and "noita_kirja_out1.json" or "noita_kirja_out2.json")
   local fh = io.open(file, "w")
-  if not fh then return end
+  if not fh then say("cannot write " .. file); ready = false; return end
   fh:write(body)
   fh:close()
+  pcall(os.remove, WORK .. "noita_kirja_response.txt")
   local cmd = string.format(
-    'curl.exe -s -m 20 -o "%slast_response.txt" -X POST "%s" -H "apikey: %s" -H "Content-Type: application/json" --data-binary "@%s"',
-    DIR, cfg.url, cfg.apikey, file)
-  run_hidden(cmd)
+    'curl.exe -s -m 20 -o "%snoita_kirja_response.txt" -X POST "%s" -H "apikey: %s" -H "Content-Type: application/json" --data-binary "@%s"',
+    WORK, cfg.url, cfg.apikey, file)
+  if run_hidden(cmd) then
+    awaiting = true
+  else
+    say("could not start curl.exe (Windows 10/11 needed)")
+    ready = false
+  end
+end
+
+-- Read the server answer of the previous send and tell the player once.
+local function check_response()
+  if not awaiting then return end
+  local f = io.open(WORK .. "noita_kirja_response.txt", "r")
+  if not f then return end
+  local txt = f:read("*a") or ""
+  f:close()
+  if txt == "" then return end
+  awaiting = false
+  if txt:match("^%s*%d+%s*$") then
+    if not connected then connected = true; say("connected, your map is being revealed") end
+  elseif not reported then
+    reported = true
+    local msg = txt:match('"message"%s*:%s*"([^"]*)"') or txt:sub(1, 120)
+    say("server error: " .. msg)
+  end
 end
 
 local function find_player()
@@ -100,19 +141,21 @@ local function find_player()
   return nil
 end
 
-function OnPlayerSpawned(player)
+local function start()
   setup()
-  if ready then
-    GamePrint("Noita Kirja: tracker active")
-  else
-    GamePrint("Noita Kirja tracker: " .. (problem or "not ready"))
-  end
+  if ready then say("tracker active") else GamePrint("Noita Kirja tracker: " .. (problem or "not ready")) end
+end
+
+function OnPlayerSpawned(player)
+  if not tried then start() end
 end
 
 function OnWorldPostUpdate()
-  if not ready then return end
   local frame = GameGetFrameNum()
   if frame % SAMPLE_FRAMES ~= 0 then return end
+  if not tried and frame > 60 then start() end -- some multiplayer mods skip OnPlayerSpawned
+  if not ready then return end
+  check_response()
   local p = find_player()
   if not p then return end
   local x, y = EntityGetTransform(p)
