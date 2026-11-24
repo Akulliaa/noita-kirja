@@ -1,5 +1,6 @@
 // Generic live-synced table: loads all rows once, then follows Supabase Realtime.
 import { supabase } from './supabase';
+import { liveChannel } from './realtime';
 import type { Profile } from './types';
 
 export interface Live<T> {
@@ -34,8 +35,7 @@ export function liveTable<T extends { id: string }>(table: string, order: string
     if (started) return;
     started = true;
     reload();
-    supabase
-      .channel(`live-${table}`)
+    liveChannel(`live-${table}`, (ch) => ch
       .on('postgres_changes', { event: '*', schema: 'public', table }, (p) => {
         if (p.eventType === 'DELETE') {
           state.items = state.items.filter((x) => x.id !== (p.old as T).id);
@@ -45,8 +45,7 @@ export function liveTable<T extends { id: string }>(table: string, order: string
           if (i >= 0) state.items[i] = row;
           else state.items.push(row);
         }
-      })
-      .subscribe((status) => { if (status === 'SUBSCRIBED' && state.loaded) reload(); });
+      }), { resync: () => { if (state.loaded) return reload(); } });
   }
 
   return { state, start, reload, get: (id) => state.items.find((x) => x.id === id) };

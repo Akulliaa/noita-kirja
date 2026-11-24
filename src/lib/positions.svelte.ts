@@ -1,5 +1,6 @@
 // Live player positions sent by the tracker mod.
 import { supabase } from './supabase';
+import { liveChannel } from './realtime';
 
 export interface Position { player_id: string; x: number; y: number; updated_at: string }
 
@@ -7,10 +8,12 @@ export const positions = $state<{ items: Record<string, Position>; now: number }
 let started = false;
 
 async function reload() {
-  const { data } = await supabase.from('player_positions').select('*');
+  const { data, error } = await supabase.from('player_positions').select('*');
+  if (error) return; // keep what we had; the next sync will retry
   const out: Record<string, Position> = {};
   for (const p of (data as Position[]) ?? []) out[p.player_id] = p;
   positions.items = out;
+  positions.now = Date.now();
 }
 
 export function startPositions() {
@@ -18,13 +21,11 @@ export function startPositions() {
   started = true;
   reload();
   setInterval(() => (positions.now = Date.now()), 15000);
-  supabase
-    .channel('positions')
+  liveChannel('positions', (ch) => ch
     .on('postgres_changes', { event: '*', schema: 'public', table: 'player_positions' }, (p) => {
       if (p.eventType === 'DELETE') reload();
       else { const n = p.new as Position; positions.items[n.player_id] = n; positions.now = Date.now(); }
-    })
-    .subscribe((s) => { if (s === 'SUBSCRIBED') reload(); });
+    }), { resync: reload, pollMs: 15_000 });
 }
 
 /** Seconds since the last signal, or null if never. */

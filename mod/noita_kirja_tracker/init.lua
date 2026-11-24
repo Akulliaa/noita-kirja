@@ -7,24 +7,34 @@
 
 local DIR = "mods/noita_kirja_tracker/"
 local SAMPLE_FRAMES = 20     -- look at the position 3 times per second
-local SEND_FRAMES = 300      -- send at most every 5 seconds
-local HEARTBEAT_FRAMES = 1800 -- send the position every 30 s even when standing still
+local SEND_SECONDS = 5       -- send at most every 5 seconds
+local HEARTBEAT_SECONDS = 30 -- send the position every 30 s even when standing still
+local ANSWER_TIMEOUT = 40    -- a send without answer after this is considered failed
+local LOST_AFTER = 90        -- no successful send for this long = "connection lost" message
 local MIN_MOVE = 48          -- world px between two recorded points
+local MAX_POINTS = 300
+local SLOTS = 4             -- sends that may wait for an answer at the same time
 
 local cfg = nil
 local ready = false
 local tried = false
 local problem = nil
 local WORK = DIR           -- where temp files go (replaced by %TEMP% when available)
-local connected = false
-local reported = false
-local awaiting = false
+local connected = false    -- currently getting good answers
+local ever_connected = false
+local reported = {}        -- error messages already shown
+local slots = {}           -- [n] = { at = os.time(), pts = {...} } sends waiting for an answer
+local last_ok = nil        -- os.time() of the last good answer
+local retry_at = 0         -- os.time() before which we do not try again after a local failure
 local ffi, CreateProcessA, CloseHandle
 
 local points = {}
 local last_x, last_y = nil, nil
 local last_send = -100000
-local toggle = false
+
+-- Wall clock in seconds. The frame counter can restart (death, new run, multiplayer
+-- resync), which used to freeze the tracker until it caught up again.
+local function now() return os.time() end
 
 local function say(msg)
   GamePrint("Noita Kirja: " .. msg)
@@ -88,6 +98,16 @@ local function run_hidden(cmd)
   return false
 end
 
+-- Put points that could not be delivered back in front of the queue.
+local function requeue(pts)
+  if not pts or #pts == 0 then return end
+  local merged = {}
+  for _, p in ipairs(pts) do merged[#merged + 1] = p end
+  for _, p in ipairs(points) do merged[#merged + 1] = p end
+  while #merged > MAX_POINTS do table.remove(merged, 1) end
+  points = merged
+end
+
 local function send(pts)
   local parts = {}
   for i, p in ipairs(pts) do
@@ -95,39 +115,67 @@ local function send(pts)
   end
   local body = string.format('{"p_key":"%s","p_points":[%s],"p_radius":%d}',
     cfg.key, table.concat(parts, ","), tonumber(cfg.radius) or 200)
-  toggle = not toggle
-  local file = WORK .. (toggle and "noita_kirja_out1.json" or "noita_kirja_out2.json")
+
+  -- Several slots so a slow answer never collides with the next send.
+  local slot = nil
+  for i = 1, SLOTS do if not slots[i] then slot = i; break end end
+  if not slot then return false end -- all still busy: keep the points for later
+  local file = WORK .. "noita_kirja_out" .. slot .. ".json"
+  local resp = WORK .. "noita_kirja_response" .. slot .. ".txt"
   local fh = io.open(file, "w")
-  if not fh then say("cannot write " .. file); ready = false; return end
+  if not fh then
+    if not reported.write then reported.write = true; say("cannot write " .. file .. ", retrying") end
+    return false
+  end
   fh:write(body)
   fh:close()
-  pcall(os.remove, WORK .. "noita_kirja_response.txt")
+  pcall(os.remove, resp)
   local cmd = string.format(
-    'curl.exe -s -m 20 -o "%snoita_kirja_response.txt" -X POST "%s" -H "apikey: %s" -H "Content-Type: application/json" --data-binary "@%s"',
-    WORK, cfg.url, cfg.apikey, file)
+    'curl.exe -s --retry 1 --retry-delay 2 -m 15 -o "%s" -X POST "%s" -H "apikey: %s" -H "Content-Type: application/json" --data-binary "@%s"',
+    resp, cfg.url, cfg.apikey, file)
   if run_hidden(cmd) then
-    awaiting = true
-  else
-    say("could not start curl.exe (Windows 10/11 needed)")
-    ready = false
+    slots[slot] = { at = now(), pts = pts }
+    return true
+  end
+  if not reported.curl then reported.curl = true; say("could not start curl.exe (Windows 10/11 needed), retrying") end
+  return false
+end
+
+local function mark_ok()
+  last_ok = now()
+  if not connected then
+    connected = true
+    if ever_connected then say("connection back, tracking again") else say("connected, your map is being revealed") end
+    ever_connected = true
   end
 end
 
--- Read the server answer of the previous send and tell the player once.
-local function check_response()
-  if not awaiting then return end
-  local f = io.open(WORK .. "noita_kirja_response.txt", "r")
-  if not f then return end
-  local txt = f:read("*a") or ""
-  f:close()
-  if txt == "" then return end
-  awaiting = false
-  if txt:match("^%s*%d+%s*$") then
-    if not connected then connected = true; say("connected, your map is being revealed") end
-  elseif not reported then
-    reported = true
-    local msg = txt:match('"message"%s*:%s*"([^"]*)"') or txt:sub(1, 120)
-    say("server error: " .. msg)
+-- Read the server answers of previous sends.
+local function check_responses()
+  local t = now()
+  for slot = 1, SLOTS do
+    local s = slots[slot]
+    if s then
+      local txt = ""
+      local f = io.open(WORK .. "noita_kirja_response" .. slot .. ".txt", "r")
+      if f then txt = f:read("*a") or ""; f:close() end
+      if txt:match("^%s*%d+%s*$") then
+        slots[slot] = nil
+        mark_ok()
+      elseif txt ~= "" and txt:find("}") then
+        slots[slot] = nil
+        requeue(s.pts)
+        local msg = txt:match('"message"%s*:%s*"([^"]*)"') or txt:sub(1, 120)
+        if not reported[msg] then reported[msg] = true; say("server error: " .. msg) end
+      elseif t - s.at > ANSWER_TIMEOUT then
+        slots[slot] = nil -- no answer (no internet, site asleep...): try again later
+        requeue(s.pts)
+      end
+    end
+  end
+  if connected and last_ok and t - last_ok > LOST_AFTER then
+    connected = false
+    say("connection lost, retrying automatically...")
   end
 end
 
@@ -178,22 +226,35 @@ function OnWorldPostUpdate()
   if frame % SAMPLE_FRAMES ~= 0 then return end
   if not tried and frame > 60 then start() end -- some multiplayer mods skip OnPlayerSpawned
   if not ready then return end
-  check_response()
-  local x, y = current_position()
-  if not x or not y then return end
+  local ok, err = pcall(function()
+    check_responses()
+    local x, y = current_position()
+    if not x or not y then return end
 
-  if not last_x or (x - last_x) ^ 2 + (y - last_y) ^ 2 >= MIN_MOVE * MIN_MOVE then
-    points[#points + 1] = { x, y }
-    last_x, last_y = x, y
-    if #points > 150 then table.remove(points, 1) end
-  end
+    if not last_x or (x - last_x) ^ 2 + (y - last_y) ^ 2 >= MIN_MOVE * MIN_MOVE then
+      points[#points + 1] = { x, y }
+      last_x, last_y = x, y
+      if #points > MAX_POINTS then table.remove(points, 1) end
+    end
 
-  local since = frame - last_send
-  if (#points > 0 and since >= SEND_FRAMES) or since >= HEARTBEAT_FRAMES then
-    if #points == 0 then points[1] = { x, y } end
-    local ok = pcall(send, points)
-    points = {}
-    last_send = frame
-    if not ok then ready = false; GamePrint("Noita Kirja tracker: send error, tracker stopped") end
+    local t = now()
+    if t < last_send then last_send = t end -- clock went back: do not wait forever
+    if t < retry_at then return end
+    local since = t - last_send
+    if (#points > 0 and since >= SEND_SECONDS) or since >= HEARTBEAT_SECONDS then
+      if #points == 0 then points[1] = { x, y } end
+      local batch = points
+      points = {}
+      last_send = t
+      if not send(batch) then
+        requeue(batch)
+        retry_at = t + 10
+      end
+    end
+  end)
+  if not ok then
+    -- Never stop for good: note it and try again a bit later.
+    retry_at = now() + 10
+    if not reported.lua then reported.lua = true; say("tracker error (will retry): " .. tostring(err)) end
   end
 end

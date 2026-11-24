@@ -1,5 +1,6 @@
 // Shared, live-synced alchemy data (elements + mixtures) for every page.
 import { supabase } from './supabase';
+import { liveChannel } from './realtime';
 import type { Element, Mixture } from './types';
 import { lt } from './loc';
 import { i18n } from './i18n.svelte';
@@ -50,8 +51,7 @@ export function startAlchemy() {
   if (started) return;
   started = true;
   reloadAlchemy();
-  supabase
-    .channel('alchemy')
+  liveChannel('alchemy', (ch) => ch
     .on('postgres_changes', { event: '*', schema: 'public', table: 'elements' }, (p) => {
       if (p.eventType === 'DELETE') alchemy.elements = alchemy.elements.filter((e) => e.id !== (p.old as Element).id);
       else upsert(alchemy.elements, p.new as Element);
@@ -60,10 +60,7 @@ export function startAlchemy() {
       if (p.eventType === 'DELETE') alchemy.mixtures = alchemy.mixtures.filter((m) => m.id !== (p.old as Mixture).id);
       else upsert(alchemy.mixtures, p.new as Mixture);
     })
-    .subscribe((status) => {
-      // After a reconnection, resync to catch anything missed.
-      if (status === 'SUBSCRIBED' && alchemy.loaded) reloadAlchemy();
-    });
+    , { resync: () => { if (alchemy.loaded) return reloadAlchemy(); } });
 }
 
 // ---- Helpers --------------------------------------------------------------
