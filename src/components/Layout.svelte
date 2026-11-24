@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { auth, isAdmin, logout } from '../lib/auth.svelte';
-  import { route } from '../lib/router.svelte';
+  import { route, go } from '../lib/router.svelte';
   import { t, type Key } from '../lib/i18n.svelte';
   import { APP_NAME } from '../lib/config';
   import Logo from './Logo.svelte';
@@ -9,6 +9,11 @@
 
   let { children }: { children: Snippet } = $props();
   let menuOpen = $state(false);
+  let q = $state('');
+  function search(e: SubmitEvent) {
+    e.preventDefault();
+    if (q.trim()) { go(`/search?q=${encodeURIComponent(q.trim())}`); q = ''; menuOpen = false; }
+  }
 
   const links: { path: string; key: Key; icon: string; admin?: boolean }[] = [
     { path: '', key: 'nav.home', icon: '🏠' },
@@ -30,6 +35,9 @@
       <Logo size={40} />
       <span>{APP_NAME}</span>
     </a>
+    <form class="search" onsubmit={search}>
+      <input bind:value={q} placeholder={'🔍 ' + t('search.short')} />
+    </form>
     <nav>
       {#each links.filter((l) => !l.admin || isAdmin()) as l}
         <a href={`#/${l.path}`} class:active={current === l.path} onclick={() => (menuOpen = false)}>
@@ -73,6 +81,7 @@
     font-family: var(--font-title); font-weight: 800; font-size: 1.3rem;
     color: var(--gold-bright); text-decoration: none; letter-spacing: 0.05em;
   }
+  .search input { padding: 0.4rem 0.7rem; font-size: 0.95rem; }
   nav { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; }
   nav a {
     display: flex; align-items: center; gap: 0.7rem;

@@ -11,11 +11,16 @@
   import Elements from './pages/Elements.svelte';
   import Mixtures from './pages/Mixtures.svelte';
   import { startAlchemy } from './lib/alchemy.svelte';
+  import { people } from './lib/live.svelte';
+  import Notes from './pages/Notes.svelte';
+  import Library from './pages/Library.svelte';
+  import Rosetta from './pages/Rosetta.svelte';
+  import Search from './pages/Search.svelte';
 
   const page = $derived(route.parts[0] ?? '');
 
   // Start live alchemy sync once the user is an approved member.
-  $effect(() => { if (auth.profile && isMember()) startAlchemy(); });
+  $effect(() => { if (auth.profile && isMember()) { startAlchemy(); people.start(); } });
 </script>
 
 {#if !auth.ready}
@@ -36,8 +41,14 @@
       <Elements />
     {:else if page === 'mixtures'}
       <Mixtures />
-    {:else if page === 'notes' || page === 'library' || page === 'rosetta'}
-      <Soon phase={3} />
+    {:else if page === 'notes'}
+      <Notes />
+    {:else if page === 'library'}
+      <Library />
+    {:else if page === 'rosetta'}
+      <Rosetta />
+    {:else if page === 'search'}
+      <Search />
     {:else if page === 'map' || page === 'players'}
       <Soon phase={4} />
     {:else}
