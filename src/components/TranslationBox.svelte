@@ -56,7 +56,7 @@
 </details>
 
 <style>
-  .trbox { margin-top: 1rem; border: 1px dashed var(--gold-dim); border-radius: 8px; padding: 0.5rem 0.9rem 0.8rem; }
+  .trbox { margin-top: 1rem; border: 1px dashed var(--gold-dim); border-radius: 2px; padding: 0.5rem 0.9rem 0.8rem; }
   summary { cursor: pointer; color: var(--gold); font-weight: 700; }
   textarea { font-family: ui-monospace, Consolas, monospace; font-size: 0.9rem; }
   .row { margin-top: 0.6rem; }

@@ -268,7 +268,7 @@
   .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.4rem; }
   .chips.scroll { max-height: 260px; overflow: auto; }
   .chip {
-    display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 2px;
     border: 1px solid var(--gold-dim); background: rgba(212, 175, 85, 0.1); font-weight: 500; font-size: 0.95rem; color: var(--text);
   }
   .chip.result { background: rgba(111, 154, 74, 0.2); border-color: rgba(140, 190, 100, 0.6); }
@@ -276,7 +276,7 @@
   .chip.clickable:hover { border-color: var(--gold); color: var(--gold-bright); }
   .x { padding: 0 0.3rem; border: none; background: none; color: var(--text-dim); font-size: 1.1rem; line-height: 1; }
   .x:hover { color: var(--danger); }
-  .new { font-size: 0.75rem; color: var(--gold-bright); font-style: normal; border: 1px dashed var(--gold); border-radius: 4px; padding: 0 0.25rem; }
+  .new { font-size: 0.75rem; color: var(--gold-bright); font-style: normal; border: 1px dashed var(--gold); border-radius: 2px; padding: 0 0.25rem; }
   .hint, .small { font-size: 0.88rem; margin: 0.3rem 0 0; }
   .check { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem; color: var(--text); font-weight: 400; }
   .check input { width: auto; }

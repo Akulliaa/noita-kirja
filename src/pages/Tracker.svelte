@@ -113,5 +113,5 @@
   select { width: auto; }
   .small { font-size: 0.88rem; }
   li { margin: 0.35rem 0; }
-  code { background: rgba(0, 0, 0, 0.35); padding: 0.1em 0.35em; border-radius: 4px; }
+  code { background: rgba(0, 0, 0, 0.35); padding: 0.1em 0.35em; border-radius: 2px; }
 </style>

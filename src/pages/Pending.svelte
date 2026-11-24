@@ -4,6 +4,7 @@
   import { supabase } from '../lib/supabase';
   import Logo from '../components/Logo.svelte';
   import LangToggle from '../components/LangToggle.svelte';
+  import Embers from '../components/Embers.svelte';
 
   // Refresh automatically when an admin approves this account.
   $effect(() => {
@@ -18,6 +19,7 @@
   });
 </script>
 
+<Embers />
 <div class="wrap">
   <div class="parchment panel">
     <Logo size={56} />
@@ -32,7 +34,7 @@
 </div>
 
 <style>
-  .wrap { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
+  .wrap { position: relative; z-index: 2; min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
   .panel { max-width: 460px; text-align: center; }
   .panel p { color: var(--ink-soft); }
   .center { justify-content: center; }

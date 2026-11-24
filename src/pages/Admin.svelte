@@ -203,9 +203,9 @@
   tr.pending td { background: rgba(224, 169, 109, 0.08); }
   .picker { margin: 0; cursor: pointer; }
   .log {
-    background: var(--wood-0); border: 1px solid var(--gold-dim); border-radius: 8px;
+    background: var(--wood-0); border: 1px solid var(--gold-dim); border-radius: 2px;
     padding: 0.8rem; max-height: 260px; overflow: auto; font-size: 0.85rem; white-space: pre-wrap; margin-top: 0.8rem;
   }
   .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 220px; overflow: auto; margin: 0.5rem 0; }
-  .chip { padding: 0.1rem 0.55rem; border-radius: 999px; border: 1px solid var(--gold-dim); font-size: 0.85rem; }
+  .chip { padding: 0.1rem 0.55rem; border-radius: 2px; border: 1px solid var(--gold-dim); font-size: 0.85rem; }
 </style>

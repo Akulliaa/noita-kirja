@@ -168,7 +168,7 @@
   .small { font-size: 0.88rem; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.5rem; margin-top: 0.6rem; }
   .tile {
-    display: flex; flex-direction: column; gap: 0.2rem; padding: 0.55rem 0.7rem; border-radius: 8px;
+    display: flex; flex-direction: column; gap: 0.2rem; padding: 0.55rem 0.7rem; border-radius: 2px;
     border: 1px solid rgba(212, 175, 85, 0.25); background: rgba(0, 0, 0, 0.15);
     color: var(--text); text-decoration: none; transition: border-color 0.15s, transform 0.1s;
   }

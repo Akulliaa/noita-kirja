@@ -91,7 +91,7 @@
   .day:first-child { margin-top: 0; }
   .ev {
     display: grid; grid-template-columns: 3.2rem auto auto 1.6rem 1fr; gap: 0.5rem; align-items: baseline;
-    padding: 0.35rem 0.4rem; border-radius: 6px; text-decoration: none; color: var(--text);
+    padding: 0.35rem 0.4rem; border-radius: 2px; text-decoration: none; color: var(--text);
   }
   .ev:hover { background: rgba(212, 175, 85, 0.08); }
   .time { font-variant-numeric: tabular-nums; font-size: 0.85rem; }

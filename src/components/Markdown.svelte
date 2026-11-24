@@ -41,7 +41,7 @@
 <style>
   .md { line-height: 1.55; overflow-wrap: anywhere; }
   .md :global(img) {
-    max-width: 100%; border-radius: 6px; border: 1px solid rgba(212, 175, 85, 0.3);
+    max-width: 100%; border-radius: 2px; border: 1px solid rgba(212, 175, 85, 0.3);
     cursor: zoom-in; vertical-align: middle; image-rendering: auto;
   }
   .md.pixel :global(img) { image-rendering: pixelated; }
@@ -51,8 +51,8 @@
     margin: 0.6em 0; padding: 0.3em 1em; border-left: 3px solid var(--gold-dim);
     background: rgba(212, 175, 85, 0.06); color: var(--text-dim);
   }
-  .md :global(code) { background: rgba(0, 0, 0, 0.3); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.92em; }
-  .md :global(pre) { background: rgba(0, 0, 0, 0.3); padding: 0.8em; border-radius: 6px; overflow: auto; }
+  .md :global(code) { background: rgba(0, 0, 0, 0.3); padding: 0.1em 0.35em; border-radius: 2px; font-size: 0.92em; }
+  .md :global(pre) { background: rgba(0, 0, 0, 0.3); padding: 0.8em; border-radius: 2px; overflow: auto; }
   .md :global(table) { margin: 0.6em 0; }
   .md :global(hr) { border: none; height: 1px; background: var(--gold-dim); margin: 1.2em 0; }
   .md :global(ul), .md :global(ol) { padding-left: 1.4em; }
@@ -61,5 +61,5 @@
     position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.85);
     display: grid; place-items: center; cursor: zoom-out; padding: 2rem;
   }
-  .lightbox img { max-width: 100%; max-height: 100%; image-rendering: pixelated; border-radius: 6px; }
+  .lightbox img { max-width: 100%; max-height: 100%; image-rendering: pixelated; border-radius: 2px; }
 </style>

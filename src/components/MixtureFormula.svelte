@@ -26,7 +26,7 @@
 <style>
   .formula { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
   .el {
-    padding: 0.1rem 0.55rem; border-radius: 6px; text-decoration: none; font-weight: 500;
+    padding: 0.1rem 0.55rem; border-radius: 2px; text-decoration: none; font-weight: 500;
     background: rgba(212, 175, 85, 0.1); border: 1px solid rgba(212, 175, 85, 0.3); color: var(--text);
   }
   .el:hover { border-color: var(--gold); color: var(--gold-bright); }

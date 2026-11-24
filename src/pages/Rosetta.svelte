@@ -277,7 +277,7 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.7rem; }
   .glyph {
     display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; overflow: hidden;
-    border: 2px solid var(--c); border-radius: 10px; background: var(--wood-2); color: var(--text);
+    border: 2px solid var(--c); border-radius: 2px; background: var(--wood-2); color: var(--text);
   }
   .glyph.sel { box-shadow: 0 0 0 3px var(--gold-bright); }
   .pic { height: 90px; display: grid; place-items: center; background: radial-gradient(circle, #2b2118, #120c08); }
@@ -288,11 +288,11 @@
   .meaning.unknown { color: var(--text-dim); }
   .panel { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow: auto; }
   .panel h2 { margin: 0; }
-  .viewpic { display: grid; place-items: center; padding: 1rem; margin: 0.8rem 0; border-radius: 10px; background: radial-gradient(circle, #2b2118, #120c08); }
+  .viewpic { display: grid; place-items: center; padding: 1rem; margin: 0.8rem 0; border-radius: 2px; background: radial-gradient(circle, #2b2118, #120c08); }
   .panel :global(img.big) { max-width: 100%; max-height: 220px; min-width: 96px; image-rendering: pixelated; }
   .drop {
     display: grid; justify-items: center; gap: 0.5rem; padding: 1rem; margin-top: 0.8rem;
-    border: 2px dashed var(--gold-dim); border-radius: 10px; background: rgba(0, 0, 0, 0.2); text-align: center;
+    border: 2px dashed var(--gold-dim); border-radius: 2px; background: rgba(0, 0, 0, 0.2); text-align: center;
   }
   .drop.dragging { border-color: var(--gold-bright); }
   .pick { margin: 0; cursor: pointer; }

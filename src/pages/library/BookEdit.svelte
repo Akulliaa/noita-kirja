@@ -115,7 +115,7 @@
 <style>
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
   @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
-  fieldset { margin-top: 1rem; border: 1px solid rgba(212, 175, 85, 0.35); border-radius: 8px; padding: 0.3rem 1rem 0.8rem; }
+  fieldset { margin-top: 1rem; border: 1px solid rgba(212, 175, 85, 0.35); border-radius: 2px; padding: 0.3rem 1rem 0.8rem; }
   legend { color: var(--gold); font-family: var(--font-title); padding: 0 0.4rem; }
   .small { font-size: 0.85rem; margin: 0.5rem 0 0; }
   .actions { margin-top: 1rem; }

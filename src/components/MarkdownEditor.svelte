@@ -115,7 +115,7 @@
 </div>
 
 <style>
-  .editor { border: 1px solid var(--gold-dim); border-radius: 8px; overflow: hidden; background: var(--wood-1); }
+  .editor { border: 1px solid var(--gold-dim); border-radius: 2px; overflow: hidden; background: var(--wood-1); }
   .editor.dragging { border-color: var(--gold-bright); box-shadow: 0 0 0 3px rgba(240, 207, 122, 0.3); }
   .bar { display: flex; flex-wrap: wrap; gap: 0.25rem; align-items: center; padding: 0.4rem; border-bottom: 1px solid rgba(212, 175, 85, 0.25); background: var(--wood-2); }
   .tool { min-width: 2rem; justify-content: center; padding: 0.2rem 0.5rem; }

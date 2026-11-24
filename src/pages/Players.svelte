@@ -92,8 +92,8 @@
   .color input { width: 2.2rem; height: 2.2rem; }
   .stat { display: flex; justify-content: space-between; align-items: baseline; }
   .stat strong { font-family: var(--font-title); color: var(--gold-bright); font-size: 1.2rem; }
-  .bar { height: 8px; border-radius: 99px; background: rgba(0, 0, 0, 0.35); overflow: hidden; }
-  .bar div { height: 100%; background: var(--c); border-radius: 99px; transition: width 0.4s; }
+  .bar { height: 8px; border-radius: 2px; background: rgba(0, 0, 0, 0.35); overflow: hidden; }
+  .bar div { height: 100%; background: var(--c); border-radius: 2px; transition: width 0.4s; }
   .small { font-size: 0.85rem; }
   .badge.live { color: #9fd27a; margin-left: 0.3rem; }
   .mapbtn { justify-content: center; }

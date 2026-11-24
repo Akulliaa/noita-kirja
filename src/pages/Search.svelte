@@ -74,6 +74,6 @@
   section { margin-bottom: 1rem; }
   ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
   .snip { margin: 0.2rem 0 0; font-size: 0.92rem; }
-  .chip { padding: 0.15rem 0.6rem; border-radius: 999px; border: 1px solid var(--gold-dim); text-decoration: none; color: var(--text); }
+  .chip { padding: 0.15rem 0.6rem; border-radius: 2px; border: 1px solid var(--gold-dim); text-decoration: none; color: var(--text); }
   .chip:hover { border-color: var(--gold); color: var(--gold-bright); }
 </style>

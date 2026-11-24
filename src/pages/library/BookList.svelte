@@ -74,7 +74,7 @@
   @media (max-width: 700px) { .filters { grid-template-columns: 1fr; } }
   .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
   .book {
-    display: flex; cursor: pointer; border-radius: 4px 10px 10px 4px; overflow: hidden;
+    display: flex; cursor: pointer; border-radius: 2px; overflow: hidden;
     background: var(--parchment); color: var(--ink); box-shadow: var(--shadow);
     transition: transform 0.12s;
   }

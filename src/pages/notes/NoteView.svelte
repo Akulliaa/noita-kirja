@@ -123,10 +123,10 @@
   .small { font-size: 0.85rem; }
   .actions { margin-top: 0.8rem; gap: 0.4rem; }
   .on { border-color: var(--gold-bright); background: rgba(212, 175, 85, 0.25); }
-  .history { margin-top: 1rem; padding: 0.8rem; border: 1px dashed var(--gold-dim); border-radius: 8px; }
+  .history { margin-top: 1rem; padding: 0.8rem; border: 1px dashed var(--gold-dim); border-radius: 2px; }
   .history ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; }
   .history li { display: flex; gap: 0.5rem; align-items: center; }
   .history li.sel button.ghost { color: var(--gold-bright); }
   .trline { margin: 0 0 0.6rem; }
-  .old { margin-top: 0.8rem; padding: 0.8rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px; opacity: 0.9; }
+  .old { margin-top: 0.8rem; padding: 0.8rem; background: rgba(0, 0, 0, 0.2); border-radius: 2px; opacity: 0.9; }
 </style>

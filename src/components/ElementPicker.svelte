@@ -93,7 +93,7 @@
   .menu {
     position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% + 4px);
     margin: 0; padding: 0.3rem; list-style: none;
-    background: var(--wood-2); border: 1px solid var(--gold-dim); border-radius: 8px;
+    background: var(--wood-2); border: 1px solid var(--gold-dim); border-radius: 2px;
     box-shadow: var(--shadow); max-height: 300px; overflow: auto;
   }
   .menu button {

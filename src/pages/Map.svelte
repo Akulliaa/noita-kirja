@@ -343,8 +343,8 @@
 
   .panel {
     position: absolute; top: 0.8rem; right: 0.8rem; width: 270px; max-height: calc(100% - 1.6rem); overflow: auto;
-    background: rgba(30, 21, 16, 0.92); border: 1px solid var(--gold-dim); border-radius: 10px;
-    padding: 0.8rem 0.9rem; box-shadow: var(--shadow); backdrop-filter: blur(4px);
+    background-color: rgba(23, 17, 31, 0.94); border: 2px solid transparent; border-image: var(--px-gold) 3 / 6px stretch;
+    background-clip: padding-box; padding: 0.8rem 0.9rem; box-shadow: var(--shadow); backdrop-filter: blur(4px);
   }
   .panel h2 { font-size: 1.05rem; margin: 0 0 0.4rem; }
   .block { padding: 0.5rem 0; border-top: 1px solid rgba(212, 175, 85, 0.2); }
@@ -352,7 +352,7 @@
   .check { display: flex; align-items: center; gap: 0.45rem; margin: 0.2rem 0; color: var(--text); font-weight: 400; cursor: pointer; }
   .check input { width: auto; }
   .check.sub { margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-dim); }
-  .swatch { width: 0.9rem; height: 0.9rem; border-radius: 3px; border: 1px solid rgba(255, 255, 255, 0.4); }
+  .swatch { width: 0.9rem; height: 0.9rem; border-radius: 2px; border: 1px solid rgba(255, 255, 255, 0.4); }
   .livedot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #7fd35a; box-shadow: 0 0 6px #7fd35a; }
   .tools { display: flex; flex-wrap: wrap; gap: 0.3rem; }
   .tools button { padding: 0.35rem 0.55rem; font-size: 1.05rem; }
@@ -364,7 +364,7 @@
 
   .banner, .toast {
     position: absolute; left: 50%; transform: translateX(-50%);
-    background: rgba(30, 21, 16, 0.95); border: 1px solid var(--gold); border-radius: 999px;
+    background-color: rgba(23, 17, 31, 0.96); border: 2px solid transparent; border-image: var(--px-bright) 3 / 6px stretch; background-clip: padding-box;
     padding: 0.4rem 1rem; box-shadow: var(--shadow); display: flex; gap: 0.5rem; align-items: center;
   }
   .banner { top: 0.8rem; }

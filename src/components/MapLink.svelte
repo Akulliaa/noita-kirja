@@ -12,7 +12,7 @@
 
 <style>
   .maplink {
-    display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.55rem; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.55rem; border-radius: 2px;
     background: rgba(90, 134, 168, 0.2); border: 1px solid rgba(120, 170, 210, 0.55); color: #cfe6f7;
     text-decoration: none; font-size: 0.9rem;
   }

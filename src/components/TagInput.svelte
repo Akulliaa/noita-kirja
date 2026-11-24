@@ -26,13 +26,13 @@
 <style>
   .tags {
     display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; padding: 0.3rem;
-    border: 1px solid var(--gold-dim); border-radius: 7px; background: var(--wood-1);
+    border: 1px solid var(--gold-dim); border-radius: 2px; background: var(--wood-1);
   }
   .tags input { flex: 1; min-width: 120px; border: none; padding: 0.25rem 0.4rem; background: transparent; }
   .tags input:focus { box-shadow: none; }
   .tag {
     display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.1rem 0.2rem 0.1rem 0.55rem;
-    border-radius: 999px; background: rgba(90, 134, 168, 0.25); border: 1px solid rgba(120, 170, 210, 0.5); font-size: 0.9rem;
+    border-radius: 2px; background: rgba(90, 134, 168, 0.25); border: 1px solid rgba(120, 170, 210, 0.5); font-size: 0.9rem;
   }
   .tag button { border: none; background: none; padding: 0 0.3rem; color: var(--text-dim); }
 </style>
