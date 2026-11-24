@@ -1,0 +1,168 @@
+import type { Lang } from './types';
+
+const fr = {
+  'app.tagline': 'Le grimoire partagé de notre groupe',
+  'lang.switch': 'English',
+  'nav.home': 'Accueil',
+  'nav.elements': 'Éléments',
+  'nav.mixtures': 'Mélanges',
+  'nav.notes': 'Notes',
+  'nav.map': 'Carte',
+  'nav.players': 'Joueurs',
+  'nav.admin': 'Administration',
+  'nav.logout': 'Se déconnecter',
+
+  'auth.login': 'Connexion',
+  'auth.signup': 'Créer un compte',
+  'auth.username': "Nom d'utilisateur",
+  'auth.password': 'Mot de passe',
+  'auth.password2': 'Confirmer le mot de passe',
+  'auth.submit.login': 'Entrer',
+  'auth.submit.signup': 'Créer mon compte',
+  'auth.hint': 'Aucun e-mail demandé : juste un pseudo et un mot de passe.',
+  'auth.err.username': 'Pseudo : 3 à 20 caractères (lettres, chiffres, _ ou -).',
+  'auth.err.password': 'Mot de passe : 8 caractères minimum.',
+  'auth.err.mismatch': 'Les mots de passe ne correspondent pas.',
+  'auth.err.credentials': 'Pseudo ou mot de passe incorrect.',
+  'auth.err.taken': 'Ce pseudo est déjà pris.',
+  'auth.err.generic': 'Erreur : {msg}',
+  'auth.forgot': 'Mot de passe oublié ? Demande à un admin de le réinitialiser.',
+
+  'pending.title': 'En attente de validation',
+  'pending.text': 'Bienvenue {name} ! Un administrateur doit valider ton compte avant que tu puisses voir le grimoire.',
+  'pending.refresh': 'Vérifier à nouveau',
+
+  'role.pending': 'En attente',
+  'role.reader': 'Lecteur',
+  'role.admin': 'Admin',
+
+  'home.welcome': 'Bienvenue, {name}',
+  'home.stats.elements': 'éléments',
+  'home.stats.mixtures': 'mélanges',
+  'home.stats.notes': 'notes',
+  'home.stats.players': 'joueurs',
+  'home.pending': '{n} compte(s) en attente de validation',
+  'home.pending.go': 'Voir',
+
+  'soon.title': 'Bientôt',
+  'soon.text': 'Cette page arrive dans la phase {n}.',
+
+  'admin.users': 'Comptes',
+  'admin.user': 'Joueur',
+  'admin.role': 'Rôle',
+  'admin.color': 'Couleur',
+  'admin.since': 'Inscrit le',
+  'admin.actions': 'Actions',
+  'admin.resetpw': 'Nouveau mot de passe',
+  'admin.resetpw.prompt': 'Nouveau mot de passe pour {name} (8 caractères min.) :',
+  'admin.resetpw.done': 'Mot de passe de {name} changé.',
+  'admin.delete': 'Supprimer',
+  'admin.delete.confirm': 'Supprimer définitivement le compte {name} ?',
+  'admin.you': '(toi)',
+  'admin.import': "Importer l'ancienne application",
+  'admin.import.text': "Choisis le dossier de l'ancienne application (celui qui contient grimoire_data.json et Melanges). Rien n'est supprimé : les éléments déjà présents sont ignorés, tu peux relancer l'import sans risque.",
+  'admin.import.pick': 'Choisir le dossier…',
+  'admin.import.run': "Lancer l'import",
+  'admin.import.found': 'Trouvé : {elements} éléments, {mixtures} mélanges, {quests} quêtes, {images} images, {strokes} coups de pinceau de carte.',
+  'admin.import.missing': 'grimoire_data.json introuvable dans ce dossier.',
+  'admin.import.done': 'Import terminé !',
+
+  'common.save': 'Enregistrer',
+  'common.cancel': 'Annuler',
+  'common.loading': 'Chargement…',
+  'common.error': 'Erreur : {msg}',
+} as const;
+
+export type Key = keyof typeof fr;
+
+const en: Record<Key, string> = {
+  'app.tagline': "Our group's shared grimoire",
+  'lang.switch': 'Français',
+  'nav.home': 'Home',
+  'nav.elements': 'Elements',
+  'nav.mixtures': 'Mixtures',
+  'nav.notes': 'Notes',
+  'nav.map': 'Map',
+  'nav.players': 'Players',
+  'nav.admin': 'Admin',
+  'nav.logout': 'Log out',
+
+  'auth.login': 'Log in',
+  'auth.signup': 'Create account',
+  'auth.username': 'Username',
+  'auth.password': 'Password',
+  'auth.password2': 'Confirm password',
+  'auth.submit.login': 'Enter',
+  'auth.submit.signup': 'Create my account',
+  'auth.hint': 'No email needed: just a username and a password.',
+  'auth.err.username': 'Username: 3 to 20 characters (letters, digits, _ or -).',
+  'auth.err.password': 'Password: at least 8 characters.',
+  'auth.err.mismatch': "Passwords don't match.",
+  'auth.err.credentials': 'Wrong username or password.',
+  'auth.err.taken': 'This username is already taken.',
+  'auth.err.generic': 'Error: {msg}',
+  'auth.forgot': 'Forgot your password? Ask an admin to reset it.',
+
+  'pending.title': 'Waiting for approval',
+  'pending.text': 'Welcome {name}! An admin needs to approve your account before you can see the grimoire.',
+  'pending.refresh': 'Check again',
+
+  'role.pending': 'Pending',
+  'role.reader': 'Reader',
+  'role.admin': 'Admin',
+
+  'home.welcome': 'Welcome, {name}',
+  'home.stats.elements': 'elements',
+  'home.stats.mixtures': 'mixtures',
+  'home.stats.notes': 'notes',
+  'home.stats.players': 'players',
+  'home.pending': '{n} account(s) waiting for approval',
+  'home.pending.go': 'Review',
+
+  'soon.title': 'Coming soon',
+  'soon.text': 'This page arrives in phase {n}.',
+
+  'admin.users': 'Accounts',
+  'admin.user': 'Player',
+  'admin.role': 'Role',
+  'admin.color': 'Color',
+  'admin.since': 'Joined',
+  'admin.actions': 'Actions',
+  'admin.resetpw': 'New password',
+  'admin.resetpw.prompt': 'New password for {name} (8 characters min.):',
+  'admin.resetpw.done': "{name}'s password changed.",
+  'admin.delete': 'Delete',
+  'admin.delete.confirm': 'Permanently delete the account {name}?',
+  'admin.you': '(you)',
+  'admin.import': 'Import the old app',
+  'admin.import.text': 'Pick the old app folder (the one containing grimoire_data.json and Melanges). Nothing is deleted: existing entries are skipped, so you can safely run the import again.',
+  'admin.import.pick': 'Choose folder…',
+  'admin.import.run': 'Run import',
+  'admin.import.found': 'Found: {elements} elements, {mixtures} mixtures, {quests} quests, {images} images, {strokes} map brush strokes.',
+  'admin.import.missing': 'grimoire_data.json not found in this folder.',
+  'admin.import.done': 'Import finished!',
+
+  'common.save': 'Save',
+  'common.cancel': 'Cancel',
+  'common.loading': 'Loading…',
+  'common.error': 'Error: {msg}',
+};
+
+const dicts: Record<Lang, Record<Key, string>> = { fr, en };
+
+const stored = (typeof localStorage !== 'undefined' && localStorage.getItem('lang')) as Lang | null;
+export const i18n = $state<{ lang: Lang }>({
+  lang: stored === 'en' || stored === 'fr' ? stored : navigator.language.startsWith('fr') ? 'fr' : 'en',
+});
+
+export function setLang(l: Lang) {
+  i18n.lang = l;
+  localStorage.setItem('lang', l);
+  document.documentElement.lang = l;
+}
+
+export function t(key: Key, vars: Record<string, string | number> = {}): string {
+  let s: string = dicts[i18n.lang][key] ?? key;
+  for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, String(v));
+  return s;
+}

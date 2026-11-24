@@ -1,7 +1,7 @@
 # Private game data — never publish (spoilers + personal progress)
-grimoire_data.json
-grimoire_data.json.tmp
+legacy/
 Melanges/
+grimoire_data.json
 *.Zone.Identifier
 *:Zone.Identifier
 
