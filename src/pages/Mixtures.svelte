@@ -18,6 +18,27 @@
   let noReaction = $state(false);
   let note = $state('');
   let saving = $state(false);
+
+  // Elements already tried with the current selection → shown in another color in the picker.
+  const resultLabel = (m: Mixture) => (m.no_reaction ? '✗ ' + t('alc.noReaction') : m.result_id ? elementName(m.result_id) : '?');
+  const tried = $derived.by(() => {
+    const out = new Map<string, string>();
+    const sel = ingredients.map((p) => p.id);
+    if (!sel.length || sel.some((x) => !x)) return out; // a brand-new element has no mixtures yet
+    for (const m of alchemy.mixtures) {
+      if (m.id === editingId || m.ingredients.length !== sel.length + 1) continue;
+      if (!sel.every((id) => m.ingredients.includes(id!))) continue;
+      const extra = m.ingredients.find((x) => !sel.includes(x));
+      if (extra) out.set(extra, out.has(extra) ? out.get(extra) + ', ' + resultLabel(m) : resultLabel(m));
+    }
+    return out;
+  });
+  // The exact current selection is already recorded
+  const already = $derived.by(() => {
+    if (ingredients.length < 2 || ingredients.some((p) => !p.id)) return null;
+    const key = ingredientsKey(ingredients.map((p) => p.id!));
+    return alchemy.mixtures.find((m) => m.id !== editingId && ingredientsKey(m.ingredients) === key) ?? null;
+  });
   let formErr = $state('');
   let formOk = $state('');
 
@@ -153,8 +174,10 @@
       </div>
       <ElementPicker id="ing" allowCreate onpick={addIngredient}
         exclude={ingredients.map((p) => p.id).filter((x): x is string => !!x)}
-        placeholder={t('alc.addIngredient')} />
+        placeholder={t('alc.addIngredient')} {tried} />
       <p class="hint muted">{t('alc.ingredientsHint')}</p>
+      {#if tried.size}<p class="hint tried-legend">⚗️ {t('alc.triedLegend', { n: tried.size })}</p>{/if}
+      {#if already}<p class="hint already">⚠️ {t('alc.alreadyRecorded')} <MixtureFormula mix={already} /></p>{/if}
 
       <label for="res">{t('alc.result')}</label>
       <label class="check"><input type="checkbox" bind:checked={noReaction} /> {t('alc.noReaction')}</label>
@@ -295,4 +318,6 @@
   .date { font-size: 0.85rem; }
   .acts { display: flex; gap: 0.3rem; }
   .empty { text-align: center; padding: 2rem 0; }
+  .tried-legend { color: #b9a7e8; margin-top: 0.2rem; }
+  .already { color: var(--gold-bright); display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-top: 0.3rem; }
 </style>

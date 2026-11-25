@@ -10,12 +10,15 @@
     allowCreate = false,
     placeholder = '',
     id = undefined,
+    tried = undefined,
   }: {
     onpick: (pick: { id: string | null; name: string }) => void;
     exclude?: string[];
     allowCreate?: boolean;
     placeholder?: string;
     id?: string;
+    /** Elements that, added to the current selection, give a mixture already recorded (id → result label). */
+    tried?: Map<string, string>;
   } = $props();
 
   let q = $state('');
@@ -70,9 +73,13 @@
   {#if open && (matches.length || showCreate)}
     <ul class="menu">
       {#each matches as m, i (m.id)}
+        {@const done = tried?.get(m.id)}
         <li>
-          <button type="button" class:active={i === active} onmousedown={() => choose({ id: m.id, name: elName(m) })}>
-            {elName(m)}
+          <button type="button" class:active={i === active} class:tried={done !== undefined}
+            title={done !== undefined ? t('alc.triedTip', { result: done }) : undefined}
+            onmousedown={() => choose({ id: m.id, name: elName(m) })}>
+            <span class="nm">{elName(m)}</span>
+            {#if done !== undefined}<span class="res">⚗️ → {done}</span>{/if}
           </button>
         </li>
       {/each}
@@ -102,4 +109,9 @@
   }
   .menu button.active, .menu button:hover { background: rgba(212, 175, 85, 0.15); border-color: rgba(212, 175, 85, 0.3); }
   .create { color: var(--gold-bright) !important; }
+  /* already tried with the current selection: still clickable (bigger mixes exist) */
+  .menu button.tried { color: #b9a7e8; background: rgba(140, 110, 220, 0.12); border-color: rgba(160, 130, 240, 0.25); }
+  .menu button.tried:hover, .menu button.tried.active { background: rgba(140, 110, 220, 0.24); border-color: rgba(170, 140, 250, 0.5); }
+  .nm { flex: 1; text-align: left; }
+  .res { font-size: 0.8rem; opacity: 0.85; font-style: italic; white-space: nowrap; margin-left: 0.6rem; }
 </style>
