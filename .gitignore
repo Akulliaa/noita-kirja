@@ -30,3 +30,6 @@ Thumbs.db
 mod/**/config.lua
 mod/**/out*.json
 mod/**/last_response.txt
+
+# tracker logs dropped here for debugging
+/noita_kirja_*
