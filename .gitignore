@@ -33,3 +33,4 @@ mod/**/last_response.txt
 
 # tracker logs dropped here for debugging
 /noita_kirja_*
+Noitamodlog/

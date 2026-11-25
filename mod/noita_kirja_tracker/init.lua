@@ -141,6 +141,8 @@ local function send(pts)
   return false
 end
 
+local ok_count, fail_count = 0, 0
+
 local function mark_ok()
   last_ok = now()
   if not connected then
@@ -162,6 +164,7 @@ local function check_responses()
       if txt:match("^%s*%d+%s*$") then
         slots[slot] = nil
         mark_ok()
+        ok_count = ok_count + 1
       elseif txt ~= "" and txt:find("}") then
         slots[slot] = nil
         requeue(s.pts)
@@ -170,6 +173,7 @@ local function check_responses()
       elseif t - s.at > ANSWER_TIMEOUT then
         slots[slot] = nil -- no answer (no internet, site asleep...): try again later
         requeue(s.pts)
+        fail_count = fail_count + 1
       end
     end
   end
@@ -179,37 +183,68 @@ local function check_responses()
   end
 end
 
--- Local player entity. Entangled Worlds marks the OTHER players with "ew_peer".
-local logged_tags = 0
-local function find_player()
+-- Where the player really is.
+-- The camera always follows what you control (or watch), so it is the reference.
+-- Entities tagged as players are only trusted when they are near the camera:
+-- Entangled Worlds can leave player-like entities behind (other players = "ew_peer",
+-- dead / polymorphed copies = "ew_notplayer"...) that do not move with you.
+local NEAR_CAMERA = 500     -- world px
+local log_lines = 0
+local last_source = nil
+local last_detail_log = 0
+
+local function log(msg)
+  if log_lines > 400 then return end -- keep the file small
+  log_lines = log_lines + 1
+  pcall(function()
+    local f = io.open(WORK .. "noita_kirja_log.txt", "a")
+    if f then f:write(os.date("%H:%M:%S ") .. msg .. "\n"); f:close() end
+  end)
+end
+
+local function current_position()
+  local okc, cx, cy = pcall(GameGetCameraPos)
+  if not okc then cx, cy = nil, nil end
+  local best, bx, by, bd = nil, nil, nil, math.huge
+  local seen = {}
   for _, tag in ipairs({ "player_unit", "polymorphed_player" }) do
-    local list = EntityGetWithTag(tag) or {}
-    for _, e in ipairs(list) do
-      if not EntityHasTag(e, "ew_peer") then
-        if logged_tags < 3 then
-          logged_tags = logged_tags + 1
-          pcall(function()
-            local f = io.open(WORK .. "noita_kirja_log.txt", "a")
-            if f then f:write(os.date("%H:%M:%S ") .. "player entity " .. e .. " tags: " .. tostring(EntityGetTags(e)) .. "\n"); f:close() end
-          end)
+    for _, e in ipairs(EntityGetWithTag(tag) or {}) do
+      if not seen[e] and not EntityHasTag(e, "ew_peer") then
+        seen[e] = true
+        local x, y = EntityGetTransform(e)
+        if x and y then
+          local d = cx and math.sqrt((x - cx) ^ 2 + (y - cy) ^ 2) or 0
+          if not EntityHasTag(e, "ew_notplayer") then d = d - 1 end -- prefer the real player on ties
+          if d < bd then best, bx, by, bd = e, x, y, d end
         end
-        return e
       end
     end
   end
-  return nil
-end
 
--- Where the player is: the character if found, otherwise the camera (= what is on screen).
-local function current_position()
-  local p = find_player()
-  if p then
-    local x, y = EntityGetTransform(p)
-    if x and y then return x, y end
+  local source, x, y
+  if best and (not cx or bd <= NEAR_CAMERA) then
+    source, x, y = "entity " .. best, bx, by
+  elseif cx then
+    source, x, y = "camera", cx, cy
+  else
+    return nil
   end
-  local ok, cx, cy = pcall(GameGetCameraPos)
-  if ok and cx and cy then return cx, cy end
-  return nil
+
+  -- Log when the source changes, plus one line per minute.
+  local t = os.time()
+  if source ~= last_source or t - last_detail_log >= 60 then
+    local extra = ""
+    if best then
+      extra = string.format(" | nearest player entity %d at %.0f px (tags: %s)", best, math.max(0, bd), tostring(EntityGetTags(best)))
+    else
+      extra = " | no player entity found"
+    end
+    log(string.format("position from %s: %.0f, %.0f%s | sends ok %d, failed %d, queued points %d",
+      source, x, y, extra, ok_count, fail_count, #points))
+    last_source = source
+    last_detail_log = t
+  end
+  return x, y
 end
 
 local function start()
