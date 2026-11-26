@@ -4,7 +4,7 @@
   import { fog, startFog, exploredCells } from '../lib/fogStore.svelte';
   import { books, notes, glyphs, pins } from '../lib/stores';
   import { alchemy } from '../lib/alchemy.svelte';
-  import { points, rankOf, type Contrib } from '../lib/ranks';
+  import { points, rankOf, TITLES, titleLevel, type Contrib } from '../lib/ranks';
   import { auth } from '../lib/auth.svelte';
   import { t, i18n, type Key } from '../lib/i18n.svelte';
   import { CELL } from '../lib/fog';
@@ -59,6 +59,7 @@
     {@const c = contrib(p.id)}
     {@const pts = points(c)}
     {@const r = rankOf(pts)}
+    {@const stats = { ...c, explored: (cells / MAP_CELLS) * 100 }}
     <div class="card player" style:--c={p.color}>
       <div class="row top">
         <span class="avatar">{p.username.slice(0, 1).toUpperCase()}</span>
@@ -86,6 +87,21 @@
           <span class="muted small">{t('fx.points', { n: pts })}{#if r.next} · {t('fx.nextRank', { name: r.next.name[i18n.lang], n: r.next.min - pts })}{/if}</span>
           <div class="rbar"><div style:width={`${Math.round(r.progress * 100)}%`}></div></div>
         </div>
+      </div>
+
+      <!-- special titles: unlocked ones shine, locked ones show what is still needed -->
+      <div class="titles">
+        {#each TITLES as ti (ti.id)}
+          {@const lv = titleLevel(ti, stats)}
+          {@const val = ti.stat === 'explored' ? lv.value.toLocaleString(i18n.lang, { maximumFractionDigits: 2 }) : lv.value}
+          <span class="title lv{lv.level}"
+            title={(lv.cur ? lv.cur.name[i18n.lang] + ' — ' : '') + `${val} ${ti.what[i18n.lang]}` +
+              (lv.next ? ' · ' + t('fx.titleNext', { name: lv.next.name[i18n.lang], n: lv.next.n }) : ' · ' + t('fx.titleMax'))}>
+            <span class="ticon">{lv.level ? ti.icon : '🔒'}</span>
+            <span class="tname">{lv.cur ? lv.cur.name[i18n.lang] : ti.tiers[0].name[i18n.lang]}</span>
+            <span class="pips">{#each ti.tiers as _, k}<i class:on={k < lv.level}></i>{/each}</span>
+          </span>
+        {/each}
       </div>
 
       <div class="stat">
@@ -129,6 +145,18 @@
   .ricon { font-size: 1.7rem; filter: drop-shadow(1px 1px 0 #000); }
   .rtext { flex: 1; display: grid; gap: 0.15rem; min-width: 0; }
   .rtext strong { font-family: var(--font-title); color: var(--gold-bright); font-size: 1.1rem; letter-spacing: 0.03em; }
+  .titles { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .title {
+    display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.1rem 0.45rem; font-size: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(0, 0, 0, 0.25); color: var(--text-dim); cursor: help;
+  }
+  .title.lv0 { opacity: 0.5; }
+  .title.lv1 { color: #e6d3a8; border-color: #8f7232; }
+  .title.lv2 { color: var(--gold-bright); border-color: var(--gold); background: rgba(255, 190, 80, 0.1); }
+  .title.lv3 { color: #f3e6ff; border-color: var(--magic); background: rgba(180, 108, 255, 0.18); box-shadow: 0 0 8px rgba(180, 108, 255, 0.4); }
+  .pips { display: inline-flex; gap: 2px; }
+  .pips i { width: 5px; height: 5px; background: rgba(255, 255, 255, 0.15); }
+  .pips i.on { background: currentColor; }
   .rbar { height: 4px; background: rgba(0, 0, 0, 0.4); }
   .rbar div { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-bright)); }
 </style>

@@ -75,8 +75,7 @@
 {:else if !note}
   <div class="card muted">{t('notes.notFound')}</div>
 {:else}
-  <div class="torn-wrap">
-  <article class="parchment torn kind-{note.kind}">
+  <article class="card">
     {#if sealKind}
       {#key stampNow}
         <div class="sealpos"><WaxSeal kind={sealKind} stamp={stampNow > 0} title={t(`status.${sealKind}` as Key)} /></div>
@@ -144,7 +143,6 @@
       <p class="muted small tip">💡 {t('quest.tip')} <a href={`#/notes/${note.id}/edit`}>{t('alc.edit')}</a></p>
     {/if}
   </article>
-  </div>
 {/if}
 
 <style>
@@ -164,43 +162,6 @@
   .trline { margin: 0 0 0.6rem; }
   .tip { margin-top: 1rem; }
   .old { margin-top: 0.8rem; padding: 0.8rem; background: rgba(0, 0, 0, 0.2); border-radius: 2px; opacity: 0.9; }
-
-  /* ---------- torn parchment ---------- */
-  .torn-wrap { filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.6)); }
-  .torn {
-    --edge-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='14'%3E%3Cpath d='M0 14V6l12 3 10-6 13 5 12-4 11 6 13-5 12 3 13-6 12 5 13-3 12 6 13-5 12 3 13-5 12 6 13-4 12 3 13-6 12 5 7-2v9z'/%3E%3C/svg%3E");
-    --edge-bot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='14'%3E%3Cpath d='M0 0v8l9-3 12 5 13-6 11 4 14-3 11 6 12-5 13 4 12-6 13 5 11-3 14 5 12-4 12 6 13-5 11 3 14-5 12 4 13-3 9 4V0z'/%3E%3C/svg%3E");
-    -webkit-mask:
-      var(--edge-top) top left / 240px 14px repeat-x,
-      linear-gradient(#000 0 0) center / 100% calc(100% - 26px) no-repeat,
-      var(--edge-bot) bottom left / 240px 14px repeat-x;
-    mask:
-      var(--edge-top) top left / 240px 14px repeat-x,
-      linear-gradient(#000 0 0) center / 100% calc(100% - 26px) no-repeat,
-      var(--edge-bot) bottom left / 240px 14px repeat-x;
-    border: 0; border-image: none;
-    position: relative;
-    padding: 2.2rem clamp(1rem, 3vw, 2.4rem) 2.4rem;
-    /* readable ink colors for everything inside */
-    --text: var(--ink);
-    --text-dim: var(--ink-soft);
-    --gold-bright: #6b3a0a;
-    --gold-dim: #a8875a;
-    --stone-1: var(--parchment);
-    --stone-2: var(--parchment-2);
-    --q-done: #3d6b1f;
-    --q-panel: rgba(255, 250, 235, 0.28);
-    color: var(--ink);
-  }
-  .torn h1 { color: var(--ink); }
-  .kind-theory h1 { font-family: var(--font-hand); font-size: 2.6rem; font-weight: 600; letter-spacing: 0; line-height: 1.05; }
-  .torn header.sealed { padding-right: 90px; }
-  .sealpos { position: absolute; top: 22px; right: clamp(0.6rem, 2vw, 1.6rem); z-index: 3; pointer-events: none; }
-  .torn :global(a:not(.btn):not(.maplink)) { color: #7a3f0c; }
-  .torn :global(.btn), .torn header :global(button:not(.ghost):not(.danger)), .torn .history :global(button:not(.ghost)) { color: #ffd97a; }
-  .torn .meta :global(.badge) { background: rgba(50, 30, 10, 0.8); }
-  .torn .kindb { color: var(--parchment); }
-  .torn .tag { color: #2f5a7a; }
-  .torn :global(.maplink) { background: #2f5a7a; color: #fff; border-color: #2f5a7a; }
-  .torn :global(.md code), .torn :global(.md pre) { background: rgba(60, 35, 10, 0.12); }
+  header.sealed { padding-right: 90px; }
+  .sealpos { position: absolute; top: 14px; right: 18px; z-index: 3; pointer-events: none; }
 </style>

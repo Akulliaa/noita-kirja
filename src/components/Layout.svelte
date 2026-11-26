@@ -7,11 +7,10 @@
   import Logo from './Logo.svelte';
   import LangToggle from './LangToggle.svelte';
   import Embers from './Embers.svelte';
-  import { sound, initSound, toggleSound } from '../lib/sound.svelte';
+  import { sound, toggleSound } from '../lib/sound.svelte';
   import { startTimeOfDay } from '../lib/timeOfDay.svelte';
 
   startTimeOfDay();
-  initSound();
 
   let { children }: { children: Snippet } = $props();
   let menuOpen = $state(false);
