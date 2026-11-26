@@ -81,7 +81,8 @@
       <span class="spacer"></span>
       <button type="button" class="ghost small" onclick={onclose}>✕</button>
     </div>
-    <canvas bind:this={canvas}></canvas>
+    <!-- canvas is absolutely positioned so its pixel size (CSS size × display scaling) can't grow the layout -->
+    <div class="mapbox"><canvas bind:this={canvas}></canvas></div>
     <div class="row foot">
       <span class="muted small">
         {#if picked}📍 {picked.x}, {picked.y}{:else}{t('quest.pickHelp')}{/if}
@@ -95,10 +96,17 @@
 </div>
 
 <style>
-  .bg { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.7); display: grid; place-items: center; padding: 1rem; }
-  .box { width: min(1100px, 100%); height: min(800px, 100%); display: flex; flex-direction: column; gap: 0.5rem; padding: 0.7rem; }
-  canvas { flex: 1; width: 100%; min-height: 0; display: block; cursor: crosshair; touch-action: none; border: 1px solid var(--gold-dim); border-radius: 2px; background: #000; }
-  .head, .foot { gap: 0.5rem; }
+  .bg {
+    position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.7);
+    display: flex; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .box {
+    width: min(1100px, 100%); height: min(800px, calc(100vh - 2rem)); height: min(800px, calc(100dvh - 2rem));
+    display: flex; flex-direction: column; gap: 0.5rem; padding: 0.7rem; overflow: hidden;
+  }
+  .mapbox { position: relative; flex: 1 1 auto; min-height: 120px; border: 1px solid var(--gold-dim); border-radius: 2px; background: #000; overflow: hidden; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+  .head, .foot { gap: 0.5rem; flex: none; }
   .small { font-size: 0.85rem; }
   .coords { font-family: ui-monospace, Consolas, monospace; }
 </style>
