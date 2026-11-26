@@ -35,8 +35,11 @@
     resize();
     for (let i = 0; i < density; i++) ps.push(spawn(true));
 
+    // 20 fps is plenty for chunky pixels and costs a fraction of 60–144 fps.
+    const STEP = 1000 / 20;
     const frame = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      if (now - last < STEP - 2) { raf = requestAnimationFrame(frame); return; }
+      const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       ctx.clearRect(0, 0, w, h);
       for (let i = 0; i < ps.length; i++) {
@@ -54,14 +57,25 @@
       }
       raf = requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
+    // Run only while the tab is visible AND the browser window has focus
+    // (e.g. paused while you play with the site on another screen).
     const vis = () => {
       cancelAnimationFrame(raf);
-      if (!document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); }
+      raf = 0;
+      if (!document.hidden && document.hasFocus()) { last = performance.now(); raf = requestAnimationFrame(frame); }
     };
     addEventListener('resize', resize);
+    addEventListener('focus', vis);
+    addEventListener('blur', vis);
     document.addEventListener('visibilitychange', vis);
-    return () => { cancelAnimationFrame(raf); removeEventListener('resize', resize); document.removeEventListener('visibilitychange', vis); };
+    vis();
+    return () => {
+      cancelAnimationFrame(raf);
+      removeEventListener('resize', resize);
+      removeEventListener('focus', vis);
+      removeEventListener('blur', vis);
+      document.removeEventListener('visibilitychange', vis);
+    };
   });
 </script>
 

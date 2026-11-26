@@ -27,7 +27,7 @@
 
 <style>
   .logo { filter: drop-shadow(0 0 6px rgba(141, 255, 106, 0.35)) drop-shadow(2px 2px 0 #000); }
-  .liquid { animation: glow 2.4s ease-in-out infinite; }
+  .liquid { animation: glow 2.4s steps(2) infinite; } /* steps: repaint twice per cycle, not every frame */
   .bubble { animation: bub 1.8s steps(3) infinite; }
   @keyframes glow { 50% { fill: #b6ff8e; } }
   @keyframes bub { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-3px); opacity: 0; } }

@@ -26,7 +26,6 @@
     const p = picked ?? (x !== null && y !== null ? { x, y } : null);
     if (p) list.push({ id: 'picked', x: p.x, y: p.y, icon: '📍', title: '', kind: 'pin' });
     engine.markers = list;
-    engine.focus = picked ? 'picked' : null;
     engine.draw();
   }
 

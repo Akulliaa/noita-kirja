@@ -68,6 +68,7 @@ export class MapEngine {
   private w = 0; private h = 0;
   private frame = 0;
   private queued = false;
+  private pulseTimer: ReturnType<typeof setTimeout> | 0 = 0;
 
   cx = 0; cy = 0; scale = 0.05;
   union: FogGrid = new Map();
@@ -102,6 +103,8 @@ export class MapEngine {
   }
 
   destroy() {
+    if (this.pulseTimer) clearTimeout(this.pulseTimer);
+    this.focus = null;
     this.ro.disconnect();
     this.canvas.removeEventListener('pointerdown', this.down);
     this.canvas.removeEventListener('pointermove', this.move);
@@ -445,7 +448,8 @@ export class MapEngine {
         ctx.fillText(m.title, p.x, p.y + 14);
       }
     }
-    if (this.focus) this.draw(); // keep the focus ring pulsing
+    // keep the focus ring pulsing, at ~15 fps: a full redraw (tiles + fog) every frame is costly
+    if (this.focus && !this.pulseTimer) this.pulseTimer = setTimeout(() => { this.pulseTimer = 0; this.draw(); }, 66);
 
     // 5) brush preview
     if (this.brushing() && this.mouse) {
