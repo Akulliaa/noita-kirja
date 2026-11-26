@@ -38,6 +38,7 @@ Run each file of `supabase/migrations/` **in order** in Supabase → SQL Editor:
 | `007_quiet_tracking.sql` | lighter tracking: only writes map/position when something changed (lets the mod send every second) |
 | `008_user_prefs.sql` | private per-account preferences (players hidden on the global map, map layers) |
 | `009_secret_titles.sql` | hidden secret titles unlocked by the tracker (data stored encoded: no spoilers) |
+| `010_backfill_secrets.sql` | optional, one-time: secret titles from areas already explored before 009 (painted areas count too) |
 
 Also: Authentication → Sign In / Providers → Email → turn **Confirm email** off.
 The first account created becomes admin.
