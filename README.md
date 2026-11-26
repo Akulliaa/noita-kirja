@@ -37,6 +37,7 @@ Run each file of `supabase/migrations/` **in order** in Supabase → SQL Editor:
 | `006_rune_locations.sql` | map position of runic texts (Rosetta Stone tab) |
 | `007_quiet_tracking.sql` | lighter tracking: only writes map/position when something changed (lets the mod send every second) |
 | `008_user_prefs.sql` | private per-account preferences (players hidden on the global map, map layers) |
+| `009_secret_titles.sql` | hidden secret titles unlocked by the tracker (data stored encoded: no spoilers) |
 
 Also: Authentication → Sign In / Providers → Email → turn **Confirm email** off.
 The first account created becomes admin.

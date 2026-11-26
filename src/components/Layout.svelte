@@ -2,16 +2,18 @@
   import type { Snippet } from 'svelte';
   import { auth, isAdmin, logout } from '../lib/auth.svelte';
   import { route, go } from '../lib/router.svelte';
-  import { t, type Key } from '../lib/i18n.svelte';
+  import { t, i18n, type Key } from '../lib/i18n.svelte';
   import { APP_NAME } from '../lib/config';
   import Logo from './Logo.svelte';
   import LangToggle from './LangToggle.svelte';
   import Embers from './Embers.svelte';
   import { sound, toggleSound, toggleAmbient, initSound } from '../lib/sound.svelte';
   import { startTimeOfDay } from '../lib/timeOfDay.svelte';
+  import { secrets, startSecrets } from '../lib/secrets.svelte';
 
   startTimeOfDay();
   initSound();
+  startSecrets();
 
   let { children }: { children: Snippet } = $props();
   let menuOpen = $state(false);
@@ -73,6 +75,14 @@
   </aside>
 
   <button class="burger" onclick={() => (menuOpen = !menuOpen)} aria-label="Menu">☰</button>
+
+  {#if secrets.toast}
+    <a class="secret-toast" href="#/players"
+      aria-live="polite" onclick={() => (secrets.toast = null)}>
+      <span class="sicon">{secrets.toast.icon}</span>
+      <span><small>{t('fx.secretUnlocked')}</small><strong>{secrets.toast.name[i18n.lang]}</strong></span>
+    </a>
+  {/if}
 
   <main class:full={current === 'map'}>
     {@render children()}
@@ -136,6 +146,19 @@
   main { position: relative; padding: 2rem clamp(1rem, 3vw, 2.5rem); max-width: 1300px; width: 100%; }
   main.full { max-width: none; padding: 0; height: 100vh; }
   .burger { display: none; }
+  .secret-toast {
+    position: fixed; right: 1.2rem; bottom: 1.2rem; z-index: 60; display: flex; gap: 0.7rem; align-items: center;
+    padding: 0.7rem 1rem; text-decoration: none; color: #d8fff4;
+    background: linear-gradient(135deg, rgba(10, 30, 28, 0.96), rgba(30, 14, 44, 0.96));
+    border: 2px solid #3fd0b0; box-shadow: 0 0 22px rgba(63, 208, 176, 0.55);
+    animation: secret-in 0.6s ease-out;
+  }
+  .secret-toast .sicon { font-size: 2rem; filter: drop-shadow(0 0 8px rgba(63, 208, 176, 0.9)); }
+  .secret-toast span:last-child { display: grid; }
+  .secret-toast small { color: #8fe9d4; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .secret-toast strong { font-family: var(--font-title); font-size: 1.15rem; }
+  @keyframes secret-in { from { opacity: 0; transform: translateY(20px) scale(0.9); } }
+  @media (prefers-reduced-motion: reduce) { .secret-toast { animation: none; } }
 
   @media (max-width: 820px) {
     .shell { grid-template-columns: 1fr; }

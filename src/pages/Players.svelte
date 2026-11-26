@@ -4,23 +4,35 @@
   import { fog, startFog, exploredCells } from '../lib/fogStore.svelte';
   import { books, notes, glyphs, pins } from '../lib/stores';
   import { alchemy } from '../lib/alchemy.svelte';
-  import { points, rankOf, TITLES, titleLevel, type Contrib } from '../lib/ranks';
+  import { points, rankOf, TITLES, titleLevel, DAILY_CAP, cappedCount, activeDays, type Contrib } from '../lib/ranks';
+  import { secrets, secretsOf, startSecrets } from '../lib/secrets.svelte';
   import { auth } from '../lib/auth.svelte';
   import { t, i18n, type Key } from '../lib/i18n.svelte';
   import { CELL } from '../lib/fog';
   import { positions, startPositions, ageSeconds } from '../lib/positions.svelte';
   startPositions();
 
-  startFog(); books.start(); notes.start(); glyphs.start(); pins.start();
+  startFog(); books.start(); notes.start(); glyphs.start(); pins.start(); startSecrets();
 
-  function contrib(id: string): Contrib {
-    const by = (arr: { created_by: string | null }[]) => arr.filter((x) => x.created_by === id).length;
+  type Dated = { created_by: string | null; created_at: string };
+  /** Contributions of a player (daily-capped, see DAILY_CAP) + days active + confirmed notes. */
+  function contrib(id: string): Contrib & { days: number; confirmed: number } {
+    const dates = (arr: Dated[]) => arr.filter((x) => x.created_by === id).map((x) => x.created_at);
+    const d = {
+      notes: dates(notes.state.items),
+      books: books.state.items.filter((b) => b.found_by === id).map((b) => b.created_at),
+      mixtures: dates(alchemy.mixtures),
+      runes: dates(glyphs.state.items),
+      pins: dates(pins.state.items),
+    };
     return {
-      notes: by(notes.state.items),
-      books: books.state.items.filter((b) => b.found_by === id).length,
-      mixtures: by(alchemy.mixtures),
-      runes: by(glyphs.state.items),
-      pins: by(pins.state.items),
+      notes: cappedCount(d.notes, DAILY_CAP.notes),
+      books: cappedCount(d.books, DAILY_CAP.books),
+      mixtures: cappedCount(d.mixtures, DAILY_CAP.mixtures),
+      runes: cappedCount(d.runes, DAILY_CAP.runes),
+      pins: cappedCount(d.pins, DAILY_CAP.pins),
+      days: activeDays(Object.values(d).flat()),
+      confirmed: notes.state.items.filter((n) => n.created_by === id && (n.status === 'confirmed' || n.status === 'done')).length,
     };
   }
 
@@ -96,6 +108,7 @@
           {@const val = ti.stat === 'explored' ? lv.value.toLocaleString(i18n.lang, { maximumFractionDigits: 2 }) : lv.value}
           <span class="title lv{lv.level}"
             title={(lv.cur ? lv.cur.name[i18n.lang] + ' — ' : '') + `${val} ${ti.what[i18n.lang]}` +
+              (ti.capped ? ` (${t('fx.capped', { n: DAILY_CAP[ti.stat as keyof Contrib] })})` : '') +
               (lv.next ? ' · ' + t('fx.titleNext', { name: lv.next.name[i18n.lang], n: lv.next.n }) : ' · ' + t('fx.titleMax'))}>
             <span class="ticon">{lv.level ? ti.icon : '🔒'}</span>
             <span class="tname">{lv.cur ? lv.cur.name[i18n.lang] : ti.tiers[0].name[i18n.lang]}</span>
@@ -103,6 +116,24 @@
           </span>
         {/each}
       </div>
+
+      <!-- hidden secret titles: found in the game itself, through the tracker -->
+      {#if secrets.loaded && secrets.total}
+        {@const sec = secretsOf(p.id)}
+        <div class="titles">
+          {#each sec as s (s.g.id)}
+            <span class="title secret" title={`${t('fx.secretTitle')} — ${s.cur![i18n.lang]}` +
+              (s.next ? ' · ' + t('fx.secretMore') : ' · ' + t('fx.titleMax'))}>
+              <span class="ticon">{s.g.icon}</span>
+              <span class="tname">{s.cur![i18n.lang]}</span>
+              <span class="pips">{#each s.g.tiers as _, k}<i class:on={k < s.level}></i>{/each}</span>
+            </span>
+          {/each}
+          <span class="title lv0 hidden" title={t('fx.secretHint')}>
+            <span class="ticon">🗝️</span><span class="tname">{t('fx.secrets', { n: sec.length, total: secrets.total })}</span>
+          </span>
+        </div>
+      {/if}
 
       <div class="stat">
         <span>{t('players.explored')}</span>
@@ -154,6 +185,11 @@
   .title.lv1 { color: #e6d3a8; border-color: #8f7232; }
   .title.lv2 { color: var(--gold-bright); border-color: var(--gold); background: rgba(255, 190, 80, 0.1); }
   .title.lv3 { color: #f3e6ff; border-color: var(--magic); background: rgba(180, 108, 255, 0.18); box-shadow: 0 0 8px rgba(180, 108, 255, 0.4); }
+  .title.secret {
+    color: #d8fff4; border-color: #3fd0b0; background: linear-gradient(90deg, rgba(63, 208, 176, 0.22), rgba(180, 108, 255, 0.18));
+    box-shadow: 0 0 10px rgba(63, 208, 176, 0.45); text-shadow: 0 0 6px rgba(63, 208, 176, 0.7);
+  }
+  .title.hidden { font-style: italic; }
   .pips { display: inline-flex; gap: 2px; }
   .pips i { width: 5px; height: 5px; background: rgba(255, 255, 255, 0.15); }
   .pips i.on { background: currentColor; }
