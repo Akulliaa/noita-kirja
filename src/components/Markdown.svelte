@@ -24,6 +24,12 @@
     });
   });
 
+  // The zoomed image is rendered under <body>: masked / transformed ancestors would clip it.
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return { destroy: () => node.remove() };
+  }
+
   function click(e: MouseEvent) {
     const t = e.target as HTMLElement;
     if (t.tagName === 'IMG') zoom = (t as HTMLImageElement).src;
@@ -35,7 +41,7 @@
 
 {#if zoom}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="lightbox" onclick={() => (zoom = null)}><img src={zoom} alt="" /></div>
+  <div class="lightbox" use:portal onclick={() => (zoom = null)}><img src={zoom} alt="" /></div>
 {/if}
 
 <style>

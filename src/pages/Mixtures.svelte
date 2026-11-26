@@ -8,6 +8,8 @@
   import type { Mixture } from '../lib/types';
   import ElementPicker from '../components/ElementPicker.svelte';
   import MixtureFormula from '../components/MixtureFormula.svelte';
+  import ReactionBurst from '../components/ReactionBurst.svelte';
+  import { sfx } from '../lib/sound.svelte';
 
   type Pick = { id: string | null; name: string };
 
@@ -41,6 +43,7 @@
   });
   let formErr = $state('');
   let formOk = $state('');
+  let reaction = $state<{ kind: 'new' | 'known' | 'none'; label: string; n: number } | null>(null);
 
   function resetForm() {
     editingId = null; ingredients = []; result = null; noReaction = false; note = ''; formErr = '';
@@ -95,6 +98,12 @@
         : await supabase.from('mixtures').insert(row);
       if (error) throw error;
       formOk = t('alc.saved');
+      reaction = {
+        kind: noReaction ? 'none' : result && !result.id ? 'new' : 'known',
+        label: noReaction ? '' : result?.name ?? '',
+        n: (reaction?.n ?? 0) + 1,
+      };
+      sfx('bloop');
       resetForm();
     } catch (err: any) {
       formErr = t('common.error', { msg: err?.message ?? String(err) });
@@ -157,6 +166,12 @@
 <h1>⚗️ {t('nav.mixtures')}</h1>
 
 {#if alchemy.error}<p class="error">{t('common.error', { msg: alchemy.error })}</p>{/if}
+
+{#if reaction}
+  {#key reaction.n}
+    <ReactionBurst kind={reaction.kind} label={reaction.label} ondone={() => (reaction = null)} />
+  {/key}
+{/if}
 
 <div class="top">
   {#if isAdmin()}

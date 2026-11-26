@@ -75,6 +75,7 @@ export class MapEngine {
   unionVersion = 0;
   outlines: Outline[] = [];
   routes: { color: string; points: { x: number; y: number }[] }[] = []; // dashed lines (quest routes)
+  trails: { color: string; points: { x: number; y: number }[] }[] = []; // recent path of live players, oldest first
   markers: Marker[] = [];
   focus: string | null = null; // highlighted marker id
   tool: Tool = 'pan';
@@ -367,8 +368,15 @@ export class MapEngine {
       ctx.translate(this.w / 2, this.h / 2);
       ctx.scale(this.scale, this.scale);
       ctx.translate(-this.cx, -this.cy);
-      ctx.lineWidth = Math.max(1.5, 2.5 * Math.min(1, this.scale * 8)) / this.scale;
       ctx.lineJoin = 'round';
+      // soft warm glow where the fog ends (two wide translucent passes, no blur filter = cheap)
+      ctx.setLineDash([]);
+      for (const [w, a] of [[14, 0.06], [7, 0.1]] as const) {
+        ctx.lineWidth = w / this.scale;
+        ctx.strokeStyle = `rgba(255, 190, 90, ${a})`;
+        for (const o of this.outlines) ctx.stroke(o.path);
+      }
+      ctx.lineWidth = Math.max(1.5, 2.5 * Math.min(1, this.scale * 8)) / this.scale;
       this.outlines.forEach((o, i) => {
         ctx.strokeStyle = o.color;
         ctx.setLineDash(this.outlines.length > 1 && i % 2 ? [6 / this.scale, 4 / this.scale] : []);
@@ -388,6 +396,21 @@ export class MapEngine {
       ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 5; ctx.stroke();
       ctx.strokeStyle = r.color; ctx.lineWidth = 2.5; ctx.stroke();
       ctx.restore();
+    }
+
+    // 3c) fading trails behind live players (small pixel squares, oldest = faintest)
+    for (const tr of this.trails) {
+      const n = tr.points.length;
+      ctx.fillStyle = tr.color;
+      tr.points.forEach((pt, i) => {
+        const s = this.toScreen(pt.x, pt.y);
+        if (s.x < -10 || s.y < -10 || s.x > this.w + 10 || s.y > this.h + 10) return;
+        const k = (i + 1) / n;
+        ctx.globalAlpha = 0.08 + 0.55 * k;
+        const size = Math.round(2 + 3 * k);
+        ctx.fillRect(Math.round(s.x - size / 2), Math.round(s.y - size / 2), size, size);
+      });
+      ctx.globalAlpha = 1;
     }
 
     // 4) markers

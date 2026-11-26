@@ -2,14 +2,27 @@
   import { supabase } from '../lib/supabase';
   import { people } from '../lib/live.svelte';
   import { fog, startFog, exploredCells } from '../lib/fogStore.svelte';
-  import { books } from '../lib/stores';
+  import { books, notes, glyphs, pins } from '../lib/stores';
+  import { alchemy } from '../lib/alchemy.svelte';
+  import { points, rankOf, type Contrib } from '../lib/ranks';
   import { auth } from '../lib/auth.svelte';
   import { t, i18n, type Key } from '../lib/i18n.svelte';
   import { CELL } from '../lib/fog';
   import { positions, startPositions, ageSeconds } from '../lib/positions.svelte';
   startPositions();
 
-  startFog(); books.start();
+  startFog(); books.start(); notes.start(); glyphs.start(); pins.start();
+
+  function contrib(id: string): Contrib {
+    const by = (arr: { created_by: string | null }[]) => arr.filter((x) => x.created_by === id).length;
+    return {
+      notes: by(notes.state.items),
+      books: books.state.items.filter((b) => b.found_by === id).length,
+      mixtures: by(alchemy.mixtures),
+      runes: by(glyphs.state.items),
+      pins: by(pins.state.items),
+    };
+  }
 
   // Area covered by the noitamap tiles (3 parts), in cells
   const MAP_CELLS = ((36352 + 36352 + 35840 - 1024) * 73728) / (CELL * CELL);
@@ -43,6 +56,9 @@
 
 <div class="grid">
   {#each rows as { p, cells, books: nb } (p.id)}
+    {@const c = contrib(p.id)}
+    {@const pts = points(c)}
+    {@const r = rankOf(pts)}
     <div class="card player" style:--c={p.color}>
       <div class="row top">
         <span class="avatar">{p.username.slice(0, 1).toUpperCase()}</span>
@@ -61,6 +77,15 @@
             <input type="color" value={p.color} onchange={(e) => setColor((e.target as HTMLInputElement).value)} />
           </label>
         {/if}
+      </div>
+
+      <div class="rank" title={t('fx.rankDetail', { notes: c.notes, books: c.books, mixtures: c.mixtures, runes: c.runes, pins: c.pins })}>
+        <span class="ricon">{r.cur.icon}</span>
+        <div class="rtext">
+          <strong>{r.cur.name[i18n.lang]}</strong>
+          <span class="muted small">{t('fx.points', { n: pts })}{#if r.next} · {t('fx.nextRank', { name: r.next.name[i18n.lang], n: r.next.min - pts })}{/if}</span>
+          <div class="rbar"><div style:width={`${Math.round(r.progress * 100)}%`}></div></div>
+        </div>
       </div>
 
       <div class="stat">
@@ -97,4 +122,13 @@
   .small { font-size: 0.85rem; }
   .badge.live { color: #9fd27a; margin-left: 0.3rem; }
   .mapbtn { justify-content: center; }
+  .rank {
+    display: flex; gap: 0.6rem; align-items: center; padding: 0.45rem 0.6rem;
+    background: linear-gradient(90deg, rgba(255, 190, 80, 0.12), transparent); border-left: 3px solid var(--gold);
+  }
+  .ricon { font-size: 1.7rem; filter: drop-shadow(1px 1px 0 #000); }
+  .rtext { flex: 1; display: grid; gap: 0.15rem; min-width: 0; }
+  .rtext strong { font-family: var(--font-title); color: var(--gold-bright); font-size: 1.1rem; letter-spacing: 0.03em; }
+  .rbar { height: 4px; background: rgba(0, 0, 0, 0.4); }
+  .rbar div { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-bright)); }
 </style>

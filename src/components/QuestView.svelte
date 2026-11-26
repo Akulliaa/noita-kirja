@@ -11,6 +11,7 @@
   import type { Note } from '../lib/types';
   import Markdown from './Markdown.svelte';
   import MapLink from './MapLink.svelte';
+  import { sfx } from '../lib/sound.svelte';
 
   let { note, showOriginal = false }: { note: Note; showOriginal?: boolean } = $props();
 
@@ -54,6 +55,7 @@
     if (error) return alert(error.message);
     const k = notes.state.items.findIndex((n) => n.id === note.id);
     if (k >= 0) notes.state.items[k] = data as Note;
+    if (value) sfx('chime');
   }
 </script>
 
@@ -119,9 +121,9 @@
   .nav { gap: 0.3rem; }
   .dot {
     width: 1.9rem; height: 1.9rem; padding: 0; justify-content: center; border-radius: 50%;
-    font-weight: 700; font-size: 0.85rem; background: rgba(0, 0, 0, 0.3);
+    font-weight: 700; font-size: 0.85rem; background: var(--q-panel, rgba(0, 0, 0, 0.3));
   }
-  .dot.done { background: rgba(159, 210, 122, 0.25); border-color: #9fd27a; color: #cdeab8; }
+  .dot.done { background: rgba(159, 210, 122, 0.25); border-color: #9fd27a; color: var(--q-done, #cdeab8); }
   .dot.cur { background: var(--gold); color: var(--ink); border-color: var(--gold-bright); }
   .intro { margin: 0.4rem 0 1rem; padding: 0.4rem 0.9rem; border-left: 3px solid var(--gold-dim); background: rgba(212, 175, 85, 0.05); }
 
@@ -150,14 +152,14 @@
   .ttl { overflow-wrap: anywhere; }
   .caret { color: var(--text-dim); font-size: 0.85rem; }
   .kicker { flex: none; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
-  .step.done .ttl { color: #cdeab8; }
+  .step.done .ttl { color: var(--q-done, #cdeab8); }
   .curb { background: rgba(240, 207, 122, 0.2); color: var(--gold-bright); border-color: var(--gold); }
   .check { display: flex; align-items: center; gap: 0.3rem; margin: 0; font-size: 0.88rem; white-space: nowrap; }
   .check input { width: auto; }
   .locs { gap: 0.4rem; margin: 0.2rem 0 0.3rem 0.3rem; }
   .body {
     margin: 0.4rem 0 0 0.3rem; padding: 0.3rem 0.9rem; border: 1px solid rgba(212, 175, 85, 0.2);
-    border-radius: 2px; background: rgba(0, 0, 0, 0.15);
+    border-radius: 2px; background: var(--q-panel, rgba(0, 0, 0, 0.15));
   }
   @media (max-width: 600px) {
     .step { grid-template-columns: 2rem 1fr; gap: 0.5rem; }

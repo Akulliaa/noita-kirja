@@ -8,6 +8,7 @@
   import type { Note, NoteKind, NoteStatus } from '../../lib/types';
   import MarkdownEditor from '../../components/MarkdownEditor.svelte';
   import QuestEditor from '../../components/QuestEditor.svelte';
+  import { queueStamp } from '../../lib/fx';
   import TagInput from '../../components/TagInput.svelte';
   import TranslationBox from '../../components/TranslationBox.svelte';
   import { addTranslations } from '../../lib/translate';
@@ -54,6 +55,8 @@
     const saved = res.data as Note;
     const i = notes.state.items.findIndex((n) => n.id === saved.id);
     if (i >= 0) notes.state.items[i] = saved; else notes.state.items.unshift(saved);
+    // just became confirmed / done → the note page presses a wax seal
+    if ((saved.status === 'confirmed' || saved.status === 'done') && existing?.status !== saved.status) queueStamp(saved.id);
     go(`/notes/${saved.id}`);
   }
 

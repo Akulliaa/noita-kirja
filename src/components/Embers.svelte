@@ -2,12 +2,15 @@
   // Ambient pixel sparks drifting up from the bottom of the screen.
   // Cheap: ~70 squares on one canvas, paused when the tab is hidden, off with reduced motion.
   import { onMount } from 'svelte';
+  import { tod, EMBER_PALETTES } from '../lib/timeOfDay.svelte';
 
   let { density = 70 }: { density?: number } = $props();
   let canvas: HTMLCanvasElement;
 
-  const COLORS = ['#ffb347', '#ff8a3d', '#ffd97a', '#b46cff', '#8dff6a', '#5fd3ff'];
-  const WEIGHTS = [5, 4, 3, 2, 1, 1];
+  // Colors follow the time of day (new sparks pick up the new palette gradually).
+  let COLORS = EMBER_PALETTES.day.colors;
+  let WEIGHTS = EMBER_PALETTES.day.weights;
+  $effect(() => { ({ colors: COLORS, weights: WEIGHTS } = EMBER_PALETTES[tod.period]); });
 
   onMount(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;

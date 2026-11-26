@@ -197,6 +197,8 @@
   });
 
   // Markers
+  const TRAIL_LEN = 40;
+  const trailPts = new Map<string, { x: number; y: number }[]>(); // not reactive on purpose
   $effect(() => {
     const list: Marker[] = [];
     if (showPins) for (const p of pins.state.items) list.push({ id: p.id, x: p.x, y: p.y, icon: p.icon, title: lt(p, 'title'), kind: 'pin' });
@@ -220,13 +222,22 @@
       if (b.loc_x !== null && b.loc_y !== null) list.push({ id: b.id, x: b.loc_x, y: b.loc_y, icon: '📖', title: lt(b, 'title'), kind: 'book' });
     // live players (in the shown set, signal < 2 min)
     positions.now;
+    const trails: { color: string; points: { x: number; y: number }[] }[] = [];
     for (const pid of visible) {
       const pos = positions.items[pid];
-      if (!pos || !isLive(pid)) continue;
+      if (!pos || !isLive(pid)) { trailPts.delete(pid); continue; }
       const pr = people.get(pid);
       list.push({ id: `player:${pid}`, x: pos.x, y: pos.y, icon: '', title: pr?.username ?? '?', kind: 'player', color: pr?.color });
+      // remember where they went while this page is open (a teleport starts a new trail)
+      let tr = trailPts.get(pid);
+      if (!tr) trailPts.set(pid, (tr = []));
+      const last = tr[tr.length - 1];
+      const d = last ? Math.hypot(pos.x - last.x, pos.y - last.y) : Infinity;
+      if (d > 1500) tr.length = 0;
+      if (d >= 24) { tr.push({ x: pos.x, y: pos.y }); if (tr.length > TRAIL_LEN) tr.shift(); }
+      if (tr.length > 1) trails.push({ color: pr?.color ?? '#ffd97a', points: tr.slice(0, -1) });
     }
-    if (engine) { engine.markers = list; engine.draw(); }
+    if (engine) { engine.markers = list; engine.trails = trails; engine.draw(); }
   });
 
   // Follow my live position

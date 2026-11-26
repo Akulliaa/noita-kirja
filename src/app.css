@@ -4,6 +4,7 @@
 @import '@fontsource/alegreya-sans/400.css';
 @import '@fontsource/alegreya-sans/500.css';
 @import '@fontsource/alegreya-sans/700.css';
+@import '@fontsource/caveat/600.css';
 
 /* ===========================================================================
    Noita Kirja — "pixel alchemy in a dark cave"
@@ -52,6 +53,7 @@
   --shadow: 0 8px 0 rgba(0, 0, 0, 0.35), 0 18px 40px rgba(0, 0, 0, 0.55);
   --font-title: 'Pixelify Sans', 'Courier New', monospace;
   --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-hand: 'Caveat', 'Segoe Print', cursive;
 
   /* pixel frames (9-slice, stepped corners) */
   --px-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 9 9' shape-rendering='crispEdges' fill='%238f7232'%3E%3Cpath d='M2 0h5v1H2zM2 8h5v1H2zM0 2h1v5H0zM8 2h1v5H8zM1 1h1v1H1zM7 1h1v1H7zM1 7h1v1H1zM7 7h1v1H7z'/%3E%3C/svg%3E");
@@ -88,6 +90,28 @@ body::after {
   content: '';
   position: fixed; inset: 0; pointer-events: none; z-index: 1;
   background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* time-of-day tint (static layer behind the content, see lib/timeOfDay.svelte.ts) */
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  transition: background 3s;
+}
+html[data-tod='dawn'] body::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 115%, rgba(255, 179, 200, 0.12), transparent 70%),
+    linear-gradient(180deg, rgba(255, 217, 122, 0.05), transparent 40%);
+}
+html[data-tod='evening'] body::before {
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 115%, rgba(255, 106, 61, 0.16), transparent 70%),
+    linear-gradient(180deg, rgba(224, 72, 77, 0.05), transparent 50%);
+}
+html[data-tod='night'] body::before {
+  background:
+    linear-gradient(180deg, rgba(40, 60, 140, 0.16), rgba(10, 10, 40, 0.18)),
+    radial-gradient(ellipse 60% 40% at 80% 0%, rgba(143, 184, 255, 0.08), transparent 70%);
 }
 
 ::selection { background: rgba(180, 108, 255, 0.45); color: #fff; }
