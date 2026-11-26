@@ -7,10 +7,11 @@
   import Logo from './Logo.svelte';
   import LangToggle from './LangToggle.svelte';
   import Embers from './Embers.svelte';
-  import { sound, toggleSound } from '../lib/sound.svelte';
+  import { sound, toggleSound, toggleAmbient, initSound } from '../lib/sound.svelte';
   import { startTimeOfDay } from '../lib/timeOfDay.svelte';
 
   startTimeOfDay();
+  initSound();
 
   let { children }: { children: Snippet } = $props();
   let menuOpen = $state(false);
@@ -62,6 +63,8 @@
       </div>
       <div class="row">
         <LangToggle />
+        <button class="ghost small snd" class:on={sound.ambient} onclick={toggleAmbient}
+          title={sound.ambient ? t('fx.ambientOff') : t('fx.ambientOn')} aria-pressed={sound.ambient}>🎵</button>
         <button class="ghost small snd" class:on={sound.on} onclick={toggleSound}
           title={sound.on ? t('fx.soundOff') : t('fx.soundOn')} aria-pressed={sound.on}>{sound.on ? '🔊' : '🔇'}</button>
         <button class="ghost small" onclick={logout}>{t('nav.logout')}</button>
@@ -122,8 +125,8 @@
     border-image-source: var(--px-bright);
     box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.5), 0 0 14px rgba(255, 190, 80, 0.45);
   }
-  .snd { padding: 0.15rem 0.45rem; opacity: 0.7; }
-  .snd.on { opacity: 1; }
+  .snd { padding: 0.15rem 0.45rem; opacity: 0.45; filter: grayscale(1); }
+  .snd.on { opacity: 1; filter: none; }
   .me { border-top: 2px dashed var(--stone-3); padding-top: 0.8rem; display: grid; gap: 0.4rem; }
   .avatar {
     width: 1.7rem; height: 1.7rem; display: grid; place-items: center; flex: none;
