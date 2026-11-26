@@ -40,7 +40,7 @@ export interface Marker {
   x: number; y: number;
   icon: string;
   title: string;
-  kind: 'pin' | 'book' | 'rune' | 'player';
+  kind: 'pin' | 'book' | 'rune' | 'player' | 'quest'; // quest: icon = step number, color = badge color
   color?: string;
 }
 export interface Outline { color: string; path: Path2D }
@@ -73,6 +73,7 @@ export class MapEngine {
   union: FogGrid = new Map();
   unionVersion = 0;
   outlines: Outline[] = [];
+  routes: { color: string; points: { x: number; y: number }[] }[] = []; // dashed lines (quest routes)
   markers: Marker[] = [];
   focus: string | null = null; // highlighted marker id
   tool: Tool = 'pan';
@@ -373,6 +374,19 @@ export class MapEngine {
       ctx.restore();
     }
 
+    // 3b) routes (screen space, so the dash stays the same size at every zoom)
+    for (const r of this.routes) {
+      if (r.points.length < 2) continue;
+      ctx.save();
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.setLineDash([8, 7]);
+      ctx.beginPath();
+      r.points.forEach((pt, i) => { const s = this.toScreen(pt.x, pt.y - 12 / this.scale); if (i) ctx.lineTo(s.x, s.y); else ctx.moveTo(s.x, s.y); });
+      ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 5; ctx.stroke();
+      ctx.strokeStyle = r.color; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.restore();
+    }
+
     // 4) markers
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
@@ -393,6 +407,28 @@ export class MapEngine {
         ctx.font = '600 12px "Alegreya Sans", sans-serif';
         ctx.fillStyle = '#fff';
         ctx.fillText(m.title, p.x, p.y - 10);
+        continue;
+      }
+      if (m.kind === 'quest') {
+        // numbered badge, drawn so its centre sits where emoji markers sit (hit test: y - 12)
+        const cy = p.y - 12;
+        ctx.fillStyle = m.color ?? '#d4af55';
+        ctx.strokeStyle = '#1a1008';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(p.x, cy, 11, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.font = '700 12px "Alegreya Sans", sans-serif';
+        ctx.fillStyle = '#1a1008';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(m.icon, p.x, cy + 1);
+        ctx.textBaseline = 'bottom';
+        if (this.scale > 0.15) {
+          ctx.font = '600 12px "Alegreya Sans", sans-serif';
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+          ctx.strokeText(m.title, p.x, p.y + 14);
+          ctx.fillStyle = '#f0e2c0';
+          ctx.fillText(m.title, p.x, p.y + 14);
+        }
         continue;
       }
       ctx.font = '22px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';

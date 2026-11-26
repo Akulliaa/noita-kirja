@@ -10,7 +10,8 @@
     rows = 14,
     id = undefined,
     placeholder = '',
-  }: { value: string; folder: string; rows?: number; id?: string; placeholder?: string } = $props();
+    compact = false,
+  }: { value: string; folder: string; rows?: number; id?: string; placeholder?: string; compact?: boolean } = $props();
 
   let ta: HTMLTextAreaElement;
   let mode = $state<'write' | 'preview' | 'split'>('split');
@@ -99,6 +100,7 @@
       {rows}
       {placeholder}
       class:hidden={mode === 'preview'}
+      class:compact
       onpaste={paste}
       ondragover={(e) => { if (e.dataTransfer?.types.includes('Files')) { e.preventDefault(); dragging = true; } }}
       ondragleave={() => (dragging = false)}
@@ -126,6 +128,7 @@
   @media (max-width: 900px) { .panes.split { grid-template-columns: 1fr; } }
   textarea { border: none; border-radius: 0; resize: vertical; min-height: 12rem; font-family: ui-monospace, Consolas, monospace; font-size: 0.92rem; line-height: 1.5; }
   textarea:focus { box-shadow: none; }
+  textarea.compact { min-height: 5rem; }
   .hidden { display: none; }
   .preview { padding: 0.6rem 1rem; border-left: 1px solid rgba(212, 175, 85, 0.25); max-height: 70vh; overflow: auto; }
   .hint { margin: 0; padding: 0.3rem 0.6rem; font-size: 0.82rem; border-top: 1px solid rgba(212, 175, 85, 0.15); }

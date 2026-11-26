@@ -8,6 +8,12 @@
   import { KINDS, KIND_ICON, STATUSES } from '../../lib/noteMeta';
   import type { NoteKind, NoteStatus } from '../../lib/types';
   import StatusBadge from '../../components/StatusBadge.svelte';
+  import { parseQuest } from '../../lib/quest';
+
+  const stepsOf = (body: string) => {
+    const q = parseQuest(body);
+    return q.steps.length ? { done: q.steps.filter((s) => s.done).length, total: q.steps.length } : null;
+  };
 
   let kind = $state<NoteKind | 'all'>('all');
   let status = $state<NoteStatus | 'all'>('all');
@@ -68,6 +74,10 @@
         <p class="ex muted">{excerpt(lt(n, 'body')) || '…'}</p>
         <div class="row foot">
           <StatusBadge status={n.status} />
+          {#if n.kind === 'quest'}
+            {@const st = stepsOf(n.body)}
+            {#if st}<span class="steps" title={t('quest.progress', st)}>🎯 {st.done}/{st.total}</span>{/if}
+          {/if}
           {#each n.tags as tg}<span class="tag">#{tg}</span>{/each}
           <span class="spacer"></span>
           <span class="muted small">{personName(n.updated_by)} · {fmt(n.updated_at)}</span>
@@ -96,6 +106,7 @@
   .ex { margin: 0; flex: 1; font-size: 0.95rem; }
   .foot { gap: 0.4rem; }
   .tag { font-size: 0.8rem; color: #9cc3df; }
+  .steps { font-size: 0.8rem; padding: 0 0.35rem; border: 1px solid var(--gold-dim); border-radius: 2px; color: var(--gold-bright); }
   .small { font-size: 0.82rem; }
   .empty { text-align: center; padding: 2.5rem; }
 </style>

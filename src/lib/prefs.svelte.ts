@@ -9,10 +9,11 @@ export interface MapPrefs {
   showPins: boolean;
   showBooks: boolean;
   showRunes: boolean;
+  showQuests: boolean;
 }
 export interface Prefs { map: MapPrefs }
 
-const DEFAULTS: Prefs = { map: { hidden: [], includeReaders: false, showPins: true, showBooks: true, showRunes: true } };
+const DEFAULTS: Prefs = { map: { hidden: [], includeReaders: false, showPins: true, showBooks: true, showRunes: true, showQuests: true } };
 
 function merge(raw: any): Prefs {
   const m = raw?.map ?? {};
@@ -23,6 +24,7 @@ function merge(raw: any): Prefs {
       showPins: typeof m.showPins === 'boolean' ? m.showPins : DEFAULTS.map.showPins,
       showBooks: typeof m.showBooks === 'boolean' ? m.showBooks : DEFAULTS.map.showBooks,
       showRunes: typeof m.showRunes === 'boolean' ? m.showRunes : DEFAULTS.map.showRunes,
+      showQuests: typeof m.showQuests === 'boolean' ? m.showQuests : DEFAULTS.map.showQuests,
     },
   };
 }

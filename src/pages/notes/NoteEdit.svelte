@@ -7,6 +7,7 @@
   import { KINDS, KIND_ICON, STATUSES, STATUS_ICON } from '../../lib/noteMeta';
   import type { Note, NoteKind, NoteStatus } from '../../lib/types';
   import MarkdownEditor from '../../components/MarkdownEditor.svelte';
+  import QuestEditor from '../../components/QuestEditor.svelte';
   import TagInput from '../../components/TagInput.svelte';
   import TranslationBox from '../../components/TranslationBox.svelte';
   import { addTranslations } from '../../lib/translate';
@@ -20,6 +21,8 @@
   let tags = $state<string[]>([...(existing?.tags ?? [])]);
   let body = $state(existing?.body ?? '');
   let saving = $state(false);
+  // Quests are edited step by step by default; "raw text" shows the underlying markdown.
+  let raw = $state(false);
   const lang = untrack(() => existing?.lang ?? i18n.lang);
   let tr = $state<Record<string, string>>(untrack(() => ({ title: existing?.title_tr ?? '', body: existing?.body_tr ?? '' })));
   let manual = $state<string[]>([]);
@@ -91,8 +94,24 @@
     </div>
   </div>
 
-  <label for="body">{t('notes.body')}</label>
-  <MarkdownEditor id="body" bind:value={body} folder="notes" rows={18} />
+  {#if kind === 'quest'}
+    <div class="row bodyhead">
+      <span class="lbl">{t('notes.body')}</span>
+      <span class="spacer"></span>
+      <div class="modes">
+        <button type="button" class="small" class:on={!raw} onclick={() => (raw = false)}>🎯 {t('quest.modeSteps')}</button>
+        <button type="button" class="small" class:on={raw} onclick={() => (raw = true)}>✎ {t('quest.modeRaw')}</button>
+      </div>
+    </div>
+    {#if raw}
+      <MarkdownEditor id="body" bind:value={body} folder="notes" rows={18} />
+    {:else}
+      <QuestEditor bind:body />
+    {/if}
+  {:else}
+    <label for="body">{t('notes.body')}</label>
+    <MarkdownEditor id="body" bind:value={body} folder="notes" rows={18} />
+  {/if}
 
   <TranslationBox {lang} values={{ title, body }} bind:tr bind:manual
     fields={[{ key: 'title', label: t('notes.title') }, { key: 'body', label: t('notes.body'), multiline: true }]} />
@@ -111,4 +130,8 @@
   @media (max-width: 800px) { .grid3 { grid-template-columns: 1fr; } }
   .actions { margin-top: 1rem; }
   .small { font-size: 0.85rem; }
+  .bodyhead { margin: 1rem 0 0.4rem; }
+  .lbl { color: var(--text-dim); }
+  .modes { display: flex; gap: 0.2rem; }
+  .modes .on { border-color: var(--gold-bright); background: rgba(212, 175, 85, 0.25); }
 </style>

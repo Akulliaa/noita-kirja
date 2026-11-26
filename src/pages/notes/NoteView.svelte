@@ -8,6 +8,8 @@
   import { KIND_ICON } from '../../lib/noteMeta';
   import type { NoteVersion } from '../../lib/types';
   import Markdown from '../../components/Markdown.svelte';
+  import QuestView from '../../components/QuestView.svelte';
+  import { hasSteps } from '../../lib/quest';
   import StatusBadge from '../../components/StatusBadge.svelte';
   import { lt, untranslated } from '../../lib/loc';
   import { i18n as I } from '../../lib/i18n.svelte';
@@ -109,7 +111,12 @@
         <button class="ghost small" onclick={() => (showOriginal = !showOriginal)}>{showOriginal ? t('tr.showTranslation') : t('tr.showOriginal')}</button>
       </p>
     {/if}
-    {#if note.body.trim()}<Markdown source={showOriginal ? note.body : lt(note, 'body')} />{:else}<p class="muted">{t('md.empty')}</p>{/if}
+    {#if note.kind === 'quest' && hasSteps(note.body)}
+      <QuestView {note} {showOriginal} />
+    {:else if note.body.trim()}<Markdown source={showOriginal ? note.body : lt(note, 'body')} />{:else}<p class="muted">{t('md.empty')}</p>{/if}
+    {#if note.kind === 'quest' && !hasSteps(note.body) && isAdmin()}
+      <p class="muted small tip">💡 {t('quest.tip')} <a href={`#/notes/${note.id}/edit`}>{t('alc.edit')}</a></p>
+    {/if}
   </article>
 {/if}
 
@@ -128,5 +135,6 @@
   .history li { display: flex; gap: 0.5rem; align-items: center; }
   .history li.sel button.ghost { color: var(--gold-bright); }
   .trline { margin: 0 0 0.6rem; }
+  .tip { margin-top: 1rem; }
   .old { margin-top: 0.8rem; padding: 0.8rem; background: rgba(0, 0, 0, 0.2); border-radius: 2px; opacity: 0.9; }
 </style>

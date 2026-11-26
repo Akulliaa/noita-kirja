@@ -17,6 +17,7 @@
   import { addTranslations } from '../lib/translate';
   import { i18n } from '../lib/i18n.svelte';
   import { prefs, loadPrefs, setMapPrefs } from '../lib/prefs.svelte';
+  import { displayQuest, questPlaces } from '../lib/quest';
 
   startFog(); pins.start(); books.start(); notes.start(); glyphs.start(); startPositions();
   let placeRuneId = $state<string | null>(null);
@@ -36,6 +37,19 @@
   const showPins = $derived(prefs.value.map.showPins);
   const showBooks = $derived(prefs.value.map.showBooks);
   const showRunes = $derived(prefs.value.map.showRunes);
+  const showQuests = $derived(prefs.value.map.showQuests);
+  // #/map?quest=<id>: show that quest's route (even if the layer is off) and frame it.
+  const questId = $derived(route.query.get('quest'));
+  const questSteps = $derived.by(() => {
+    const out: { note: string; title: string; places: ReturnType<typeof questPlaces> }[] = [];
+    for (const n of notes.state.items) {
+      if (n.kind !== 'quest' || !(showQuests || n.id === questId)) continue;
+      const places = questPlaces(displayQuest(n.body, lt(n, 'body')));
+      if (places.length) out.push({ note: n.id, title: lt(n, 'title'), places });
+    }
+    return out;
+  });
+  const focusedQuest = $derived(questId ? notes.get(questId) : undefined);
   function togglePlayer(id: string) {
     const h = new Set(prefs.value.map.hidden);
     if (h.has(id)) h.delete(id); else h.add(id);
@@ -175,7 +189,7 @@
       .filter((id) => grids.has(id))
       .map((id) => ({ color: colors[id] ?? '#c8a44d', path: outlinePath(grids.get(id)!) }));
     engine.draw();
-    if (!fitted && fog.loaded && !untrack(() => route.query.has('x'))) {
+    if (!fitted && fog.loaded && !untrack(() => route.query.has('x') || route.query.has('quest'))) {
       fitted = true;
       const b = boundsOf(engine.union, CELL);
       if (b) engine.fit(b);
@@ -192,6 +206,16 @@
         if (g.id !== stoneId && g.loc_x !== null && g.loc_y !== null)
           list.push({ id: g.id, x: g.loc_x, y: g.loc_y, icon: '🔣', title: excerpt(lt(g, 'meaning'), 28) || '?', kind: 'rune' });
     }
+    const routes: { color: string; points: { x: number; y: number }[] }[] = [];
+    for (const q of questSteps) {
+      const dim = !!questId && q.note !== questId;
+      routes.push({ color: dim ? 'rgba(226,180,80,0.35)' : '#e2b450', points: q.places });
+      for (const p of q.places) list.push({
+        id: `quest:${q.note}:${p.step}`, x: p.x, y: p.y, icon: String(p.step + 1), kind: 'quest',
+        title: excerpt(p.label || p.title, 28), color: p.done ? '#9fd27a' : dim ? '#8f7232' : '#e2b450',
+      });
+    }
+    if (engine) engine.routes = routes;
     if (showBooks) for (const b of books.state.items)
       if (b.loc_x !== null && b.loc_y !== null) list.push({ id: b.id, x: b.loc_x, y: b.loc_y, icon: '📖', title: lt(b, 'title'), kind: 'book' });
     // live players (in the shown set, signal < 2 min)
@@ -210,6 +234,15 @@
     const me = auth.profile?.id;
     const pos = me ? positions.items[me] : undefined;
     if (follow && pos && engine) engine.centerOn(pos.x, pos.y, Math.max(engine.scale, 0.5));
+  });
+
+  let questFitted: string | null = null;
+  $effect(() => {
+    const q = questSteps.find((x) => x.note === questId);
+    if (!engine || !q || questFitted === questId) return;
+    questFitted = questId;
+    const xs = q.places.map((p) => p.x), ys = q.places.map((p) => p.y);
+    engine.fit({ x0: Math.min(...xs) - 500, y0: Math.min(...ys) - 500, x1: Math.max(...xs) + 500, y1: Math.max(...ys) + 500 });
   });
 
   $effect(() => { if (engine) { engine.tool = tool; engine.brushPx = brushPx; engine.draw(); } });
@@ -259,6 +292,13 @@
       <label class="check"><input type="checkbox" checked={showPins} onchange={(e) => setMapPrefs({ showPins: e.currentTarget.checked })} /> 📍 {t('map.pins')} ({pins.state.items.length})</label>
       <label class="check"><input type="checkbox" checked={showBooks} onchange={(e) => setMapPrefs({ showBooks: e.currentTarget.checked })} /> 📖 {t('nav.library')}</label>
       <label class="check"><input type="checkbox" checked={showRunes} onchange={(e) => setMapPrefs({ showRunes: e.currentTarget.checked })} /> 🔣 {t('map.runes')}</label>
+      <label class="check"><input type="checkbox" checked={showQuests} onchange={(e) => setMapPrefs({ showQuests: e.currentTarget.checked })} /> 🎯 {t('quest.layer')}</label>
+      {#if focusedQuest}
+        <div class="qfocus">
+          <a href={`#/notes/${focusedQuest.id}`}>🎯 {lt(focusedQuest, 'title')}</a>
+          <button class="small ghost" title={t('quest.showAll')} onclick={() => go('/map')}>✕</button>
+        </div>
+      {/if}
       {#if auth.profile && positions.items[auth.profile.id]}
         <label class="check"><input type="checkbox" bind:checked={follow} /> 🎯 {t('map.follow')}</label>
       {/if}
@@ -331,6 +371,17 @@
         <div class="row">
           <a class="btn small" href={`#/rosetta?g=${popup.m.id}`}>{t('map.openRune')}</a>
           {#if isAdmin()}<button class="small" onclick={() => { placeRuneId = popup!.m.id; placeBookId = null; tool = 'place'; popup = null; }}>↔ {t('map.move')}</button>{/if}
+        </div>
+      {:else if popup.m.kind === 'quest'}
+        {@const [, qid, qstep] = popup.m.id.split(':')}
+        {@const qn = notes.get(qid)}
+        {@const qs = qn ? displayQuest(qn.body, lt(qn, 'body')).steps[Number(qstep)] : undefined}
+        <span class="muted small">🎯 {lt(qn, 'title')}</span>
+        <strong>{t('quest.step', { n: Number(qstep) + 1 })} — {qs?.title ?? ''}</strong>
+        {#if popup.m.title && popup.m.title !== qs?.title}<span class="small">📍 {popup.m.title}</span>{/if}
+        <div class="row">
+          <a class="btn small" href={`#/notes/${qid}?step=${Number(qstep) + 1}`}>{t('quest.openStep')}</a>
+          {#if questId !== qid}<a class="btn small" href={`#/map?quest=${qid}`}>🗺️ {t('quest.showRoute')}</a>{/if}
         </div>
       {:else if popup.m.kind === 'book'}
         <strong>📖 {popup.m.title}</strong>
@@ -412,6 +463,8 @@
   .toast { bottom: 1.2rem; }
 
   .popup { position: absolute; transform: translate(-50%, calc(-100% - 30px)); padding: 0.6rem 0.8rem; display: grid; gap: 0.4rem; min-width: 180px; z-index: 5; }
+  .qfocus { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.3rem; padding: 0.2rem 0.4rem; border: 1px solid var(--gold-dim); border-radius: 2px; }
+  .qfocus a { flex: 1; font-size: 0.9rem; }
   .runepic { display: grid; place-items: center; background: #07050b; padding: 0.4rem; }
   .runepic :global(img) { max-width: 240px; max-height: 120px; image-rendering: pixelated; }
   .runetr { max-width: 260px; font-weight: 500; }

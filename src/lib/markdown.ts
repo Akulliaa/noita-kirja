@@ -41,6 +41,7 @@ export function imagePaths(src: string): string[] {
 /** Plain-text excerpt for previews. */
 export function excerpt(src: string, len = 180): string {
   const s = (src ?? '')
+    .replace(/^##[ \t]+\[\s*[xX✓✔]?\s*\][ \t]*/gm, '▸ ') // quest steps
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '🖼')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/[#>*_`~-]+/g, ' ')
